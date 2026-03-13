@@ -29,8 +29,12 @@
         .view { display: none; opacity: 0; transition: opacity 0.3s ease; }
         .view.active { display: block; opacity: 1; }
 
-        /* Dashboard Cards */
-        #syncStatus { text-align: center; font-size: 0.85em; color: #7f8c8d; margin-bottom: 15px; font-style: italic; }
+        /* Dashboard Cards & Filters */
+        #syncStatus { text-align: center; font-size: 0.85em; color: #7f8c8d; margin-bottom: 10px; font-style: italic; }
+        
+        .filter-toggle { text-align: right; margin-bottom: 10px; font-size: 0.9em; color: var(--accent); font-weight: bold; cursor: pointer; }
+        .dashboard-filter { display: none; background: #e8f4f8; padding: 15px; border-radius: 12px; margin-bottom: 15px; border: 1px solid #d1e8f0; }
+        
         .summary-card { background: linear-gradient(135deg, #3498db, #2980b9); color: white; padding: 20px; border-radius: 12px; text-align: center; margin-bottom: 20px; box-shadow: 0 4px 15px rgba(52, 152, 219, 0.3); }
         .summary-card h3 { margin: 0; font-size: 1em; opacity: 0.9; text-transform: uppercase; }
         .summary-card h1 { margin: 10px 0 0; font-size: 2.5em; }
@@ -38,35 +42,30 @@
         .chart-container { background: var(--card); padding: 20px; border-radius: 12px; box-shadow: 0 2px 10px rgba(0,0,0,0.05); margin-bottom: 20px; max-height: 350px; display: flex; flex-direction: column; align-items: center; }
         .chart-container h3 { margin-top: 0; color: var(--primary); width: 100%; text-align: center; }
         
-        /* Lists & Items Layout Fixes */
+        /* Lists & Items Layout Fixes (1 Line Amount + Ellipsis) */
         .recent-list { background: var(--card); border-radius: 12px; padding: 15px; box-shadow: 0 2px 10px rgba(0,0,0,0.05); }
         .recent-list h3 { margin-top: 0; color: var(--primary); border-bottom: 2px solid #eee; padding-bottom: 10px; }
         .list-item { display: flex; justify-content: space-between; align-items: center; padding: 12px 0; border-bottom: 1px solid #eee; transition: background 0.2s; cursor: pointer; }
         .list-item:hover { background: #f9f9f9; }
         .list-item:last-child { border-bottom: none; }
         
-        /* The UI Fix: min-width 0 prevents flex blowouts, ellipsis cleanly cuts off long text */
         .item-details { flex: 1; min-width: 0; padding-right: 10px; }
         .item-details h4 { margin: 0; font-size: 1em; color: var(--primary); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
         .item-details p { margin: 5px 0 0; font-size: 0.8em; color: #7f8c8d; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
         
-        /* The UI Fix: nowrap forces RM to stay on 1 line, flex-shrink 0 protects it */
         .item-amount { font-weight: bold; color: #e74c3c; white-space: nowrap; flex-shrink: 0; text-align: right; }
-
-        /* Edit/Delete Icons Layout */
         .item-actions { display: flex; align-items: center; gap: 10px; flex-shrink: 0; white-space: nowrap; }
         .action-icon { font-size: 1.2em; cursor: pointer; opacity: 0.7; transition: 0.2s;}
         .action-icon:hover { opacity: 1; transform: scale(1.1); }
 
         .load-more-btn { width: 100%; padding: 10px; background: #ecf0f1; color: #34495e; border: none; border-radius: 8px; font-weight: bold; cursor: pointer; margin-top: 10px; }
-        .load-more-btn:hover { background: #bdc3c7; }
 
         /* Forms & Inputs */
         label { display: block; margin: 15px 0 5px; font-weight: 600; font-size: 0.9em; }
         input, select { width: 100%; padding: 12px; border: 1px solid #ccc; border-radius: 8px; box-sizing: border-box; background: #fafafa; font-size: 1em; }
         input:focus, select:focus { outline: none; border-color: var(--accent); background: #fff; }
         .calc-box { background: #e8f4f8; padding: 10px 15px; border-radius: 8px; margin-top: 10px; border-left: 4px solid var(--accent); }
-        .save-btn { width: 100%; padding: 15px; background: var(--accent); color: white; border: none; border-radius: 8px; font-weight: bold; font-size: 1.1em; margin-top: 25px; cursor: pointer; }
+        .save-btn { width: 100%; padding: 15px; background: var(--accent); color: white; border: none; border-radius: 8px; font-weight: bold; font-size: 1.1em; margin-top: 15px; cursor: pointer; }
         .save-btn:disabled { background: #bdc3c7; }
         #status { text-align: center; margin-top: 15px; font-weight: bold; min-height: 20px; }
 
@@ -81,7 +80,7 @@
         .modal-close { position: absolute; top: 15px; right: 15px; font-size: 1.8em; cursor: pointer; color: #95a5a6; line-height: 1; z-index: 2010;}
         .modal-content h3, .modal-content h2 { margin-top: 0; border-bottom: 2px solid var(--accent); padding-bottom: 10px; color: var(--primary); text-align: center; }
         .modal-row { margin-bottom: 12px; display: flex; justify-content: space-between; border-bottom: 1px dashed #eee; padding-bottom: 5px; }
-        .modal-row span:first-child { font-weight: bold; color: #7f8c8d; }
+        .modal-row span:first-child { font-weight: bold; color: #7f8c8d; flex-shrink: 0;}
         .modal-row span:last-child { text-align: right; color: #2c3e50; }
     </style>
 </head>
@@ -91,8 +90,37 @@
     
     <div id="dashboardView" class="view active">
         <div id="syncStatus">Fetching latest data...</div>
+        
+        <div class="filter-toggle" onclick="toggleDashFilter()">🔍 Smart Filter</div>
+        <div class="dashboard-filter" id="dashFilterPanel">
+            <div style="display:flex; gap: 10px; margin-bottom: 10px;">
+                <div style="flex: 1;">
+                    <label style="margin-top:0; font-size:0.8em;">Start Date</label>
+                    <input type="date" id="dashFilterStart" style="padding: 8px;">
+                </div>
+                <div style="flex: 1;">
+                    <label style="margin-top:0; font-size:0.8em;">End Date</label>
+                    <input type="date" id="dashFilterEnd" style="padding: 8px;">
+                </div>
+            </div>
+            <label style="margin-top:0; font-size:0.8em;">Category</label>
+            <select id="dashFilterCat" style="padding: 8px; margin-bottom: 10px;">
+                <option value="All">All Categories</option>
+                <option value="Food">Food</option>
+                <option value="Collection">Collection</option>
+                <option value="Grocery">Grocery</option>
+                <option value="Subscription">Subscription</option>
+                <option value="Rental">Rental / Bills</option>
+                <option value="Loan">Loan</option>
+            </select>
+            <div style="display:flex; gap:10px;">
+                <button class="save-btn" style="flex:1; margin-top:5px; padding:10px;" onclick="applyDashFilter()">Apply</button>
+                <button class="save-btn" style="flex:1; margin-top:5px; padding:10px; background:#95a5a6;" onclick="clearDashFilter()">Clear</button>
+            </div>
+        </div>
+
         <div class="summary-card">
-            <h3>Total Spent (This Month)</h3>
+            <h3 id="dashboardTitle">Total Spent (This Month)</h3>
             <h1 id="totalSpent">RM 0.00</h1>
         </div>
         <div class="chart-container">
@@ -102,7 +130,7 @@
             </div>
         </div>
         <div class="recent-list">
-            <h3>Recent Transactions</h3>
+            <h3 id="recentListTitle">Recent Transactions</h3>
             <div id="recentTransactions"></div>
         </div>
     </div>
@@ -191,6 +219,17 @@
     </div>
 </div>
 
+<div class="modal-overlay" id="deleteConfirmModal" style="z-index: 3000;">
+    <div class="modal-content" style="text-align: center; max-width: 320px;">
+        <h3 style="color: #e74c3c; border-bottom: none; margin-bottom: 5px;">Confirm Deletion</h3>
+        <p style="color: #7f8c8d; font-size: 0.9em; margin-bottom: 20px;">Are you sure you want to delete this expense? It will be permanently removed.</p>
+        <div style="display: flex; gap: 10px;">
+            <button style="flex: 1; padding: 12px; background: #95a5a6; color: white; border: none; border-radius: 8px; font-weight: bold; cursor: pointer;" onclick="closeDeleteModal()">Cancel</button>
+            <button style="flex: 1; padding: 12px; background: #e74c3c; color: white; border: none; border-radius: 8px; font-weight: bold; cursor: pointer;" onclick="confirmDelete()">Delete</button>
+        </div>
+    </div>
+</div>
+
 <div class="modal-overlay" id="drilldownModal" onclick="closeDrilldownModal()">
     <div class="modal-content" onclick="event.stopPropagation()">
         <span class="modal-close" onclick="closeDrilldownModal()">&times;</span>
@@ -206,6 +245,13 @@
     let myChart = null;
     let monthlyChart = null; 
     let displayLimit = 5;
+    
+    // Filter State
+    let isFilterActive = false;
+    let dashFilterSettings = { start: "", end: "", cat: "All" };
+    
+    // Delete State
+    let itemToDeleteId = null;
 
     // --- FETCH DATA & FIX TIMEZONE ---
     async function fetchFromSheets() {
@@ -222,7 +268,7 @@
                     let localDay = String(d.getDate()).padStart(2, '0');
                     let correctedDate = `${localYear}-${localMonth}-${localDay}`;
                     return {
-                        id: item.id || Date.now() + index,
+                        id: item.id || Date.now() + index, // IDs used for secondary sorting
                         date: correctedDate,               
                         category: item.category,
                         desc: item.desc,
@@ -258,6 +304,36 @@
             document.querySelector('.history-tab').classList.add('active');
             renderHistory('daily');
         }
+    }
+
+    // --- DASHBOARD SMART FILTER LOGIC ---
+    function toggleDashFilter() {
+        const panel = document.getElementById('dashFilterPanel');
+        panel.style.display = panel.style.display === 'none' || panel.style.display === '' ? 'block' : 'none';
+    }
+
+    function applyDashFilter() {
+        dashFilterSettings.start = document.getElementById('dashFilterStart').value;
+        dashFilterSettings.end = document.getElementById('dashFilterEnd').value;
+        dashFilterSettings.cat = document.getElementById('dashFilterCat').value;
+        isFilterActive = true;
+        displayLimit = 5; // Reset limit on new search
+        document.getElementById('dashboardTitle').innerText = "Total Spent (Filtered)";
+        document.getElementById('recentListTitle').innerText = "Filtered Transactions";
+        updateDashboard();
+    }
+
+    function clearDashFilter() {
+        document.getElementById('dashFilterStart').value = "";
+        document.getElementById('dashFilterEnd').value = "";
+        document.getElementById('dashFilterCat').value = "All";
+        dashFilterSettings = { start: "", end: "", cat: "All" };
+        isFilterActive = false;
+        displayLimit = 5;
+        document.getElementById('dashboardTitle').innerText = "Total Spent (This Month)";
+        document.getElementById('recentListTitle').innerText = "Recent Transactions";
+        document.getElementById('dashFilterPanel').style.display = 'none';
+        updateDashboard();
     }
 
     // --- POPUP MODAL (ADD / EDIT) LOGIC ---
@@ -299,6 +375,10 @@
         document.getElementById('status').innerText = ""; 
         document.getElementById('formTitle').innerText = "Edit Expense";
         document.getElementById('submitBtn').innerText = "Update Expense";
+        
+        // Make sure previous modals close before opening Edit
+        closeModal(); 
+        closeDrilldownModal();
         document.getElementById('addModal').style.display = 'flex';
     }
 
@@ -333,13 +413,32 @@
     foreignAmount.addEventListener('input', calculateTotal);
     exchangeRate.addEventListener('input', calculateTotal);
 
-    // --- DELETE LOGIC ---
-    function deleteTransaction(id) {
-        if(!confirm("Delete this expense? This will also remove it from Google Sheets.")) return;
-        localData = localData.filter(item => item.id !== id);
+    // --- CUSTOM DELETE LOGIC ---
+    function triggerDelete(id) {
+        itemToDeleteId = id;
+        closeModal(); // Close the details popup first
+        document.getElementById('deleteConfirmModal').style.display = 'flex';
+    }
+
+    function closeDeleteModal() {
+        itemToDeleteId = null;
+        document.getElementById('deleteConfirmModal').style.display = 'none';
+    }
+
+    function confirmDelete() {
+        if(!itemToDeleteId) return;
+        localData = localData.filter(item => item.id !== itemToDeleteId);
         localStorage.setItem('myExpenseData', JSON.stringify(localData));
         updateDashboard();
+        
+        // Refresh history view if we deleted from there
+        if (document.getElementById('historyView').classList.contains('active')) {
+            const activeTab = document.querySelector('.history-tab.active').innerText.toLowerCase();
+            renderHistory(activeTab);
+        }
+        
         syncEditRemoveToSheets();
+        closeDeleteModal();
     }
 
     function syncEditRemoveToSheets() {
@@ -361,7 +460,7 @@
         if(!item) return;
         let html = `
             <div class="modal-row"><span>Date:</span> <span>${item.date}</span></div>
-            <div class="modal-row"><span>Item:</span> <span>${item.desc}</span></div>
+            <div class="modal-row"><span>Item:</span> <span style="word-break: break-word;">${item.desc}</span></div>
             <div class="modal-row"><span>Category:</span> <span>${item.category}</span></div>
             <div class="modal-row"><span>Amount:</span> <span style="font-size:1.2em; font-weight:bold; color:#e74c3c;">RM ${item.amount.toFixed(2)}</span></div>
             <div class="modal-row"><span>Method:</span> <span>${item.method}</span></div>
@@ -372,8 +471,8 @@
         
         html += `
             <div style="display: flex; gap: 10px; margin-top: 25px;">
-                <button style="flex: 1; padding: 12px; background: #f39c12; color: white; border: none; border-radius: 8px; font-weight: bold; cursor: pointer; font-size: 1.1em;" onclick="closeModal(); startEditing(${item.id})">Edit</button>
-                <button style="flex: 1; padding: 12px; background: #e74c3c; color: white; border: none; border-radius: 8px; font-weight: bold; cursor: pointer; font-size: 1.1em;" onclick="closeModal(); deleteTransaction(${item.id})">Delete</button>
+                <button style="flex: 1; padding: 12px; background: #f39c12; color: white; border: none; border-radius: 8px; font-weight: bold; cursor: pointer; font-size: 1.1em;" onclick="startEditing(${item.id})">Edit</button>
+                <button style="flex: 1; padding: 12px; background: #e74c3c; color: white; border: none; border-radius: 8px; font-weight: bold; cursor: pointer; font-size: 1.1em;" onclick="triggerDelete(${item.id})">Delete</button>
             </div>
         `;
         
@@ -393,11 +492,13 @@
             title.innerText = `Transactions: ${key}`;
             const dayData = localData.filter(item => item.date === key);
             
+            // SORTING FIX: Sort by Date first (implicit here), then ID (Newest input first)
+            dayData.sort((a, b) => b.id - a.id);
+
             if (dayData.length === 0) {
                 body.innerHTML = '<p style="text-align:center; color:#999;">No data.</p>';
             } else {
                 dayData.forEach(item => {
-                    // PENCIL REMOVED FROM HISTORY SUMMARY, JUST OPENS THE STANDARD DETAILS POPUP
                     body.innerHTML += `
                         <div style="border-bottom: 1px dashed #eee; padding: 12px 0; display: flex; justify-content: space-between; align-items: center; cursor: pointer;" onclick="closeDrilldownModal(); openModal(${item.id})">
                             <div style="flex: 1; min-width: 0; padding-right: 10px;">
@@ -456,19 +557,10 @@
                 },
                 options: { 
                     responsive: true, maintainAspectRatio: false, cutout: '70%', 
-                    plugins: { 
-                        legend: { position: 'right' },
-                        tooltip: {
-                            callbacks: {
-                                label: function(context) {
-                                    let label = context.label || '';
-                                    let value = context.parsed;
-                                    let percentage = ((value * 100) / total).toFixed(1) + "%";
-                                    return `${label}: RM ${value.toFixed(2)} (${percentage})`;
-                                }
-                            }
-                        }
-                    } 
+                    plugins: { legend: { position: 'right' }, tooltip: { callbacks: { label: function(context) {
+                        let value = context.parsed; let percentage = ((value * 100) / total).toFixed(1) + "%";
+                        return `${context.label}: RM ${value.toFixed(2)} (${percentage})`;
+                    }}}} 
                 }
             });
         }
@@ -478,14 +570,25 @@
 
     function closeDrilldownModal() { document.getElementById('drilldownModal').style.display = 'none'; }
 
-    // --- DASHBOARD RENDER ---
+    // --- DASHBOARD RENDER (WITH FILTERS & UPGRADED SORTING) ---
     function updateDashboard() {
-        const currentMonthStr = new Date().toISOString().substring(0, 7); 
-        const thisMonthData = localData.filter(item => item.date.startsWith(currentMonthStr));
-        document.getElementById('totalSpent').innerText = `RM ${thisMonthData.reduce((sum, item) => sum + item.amount, 0).toFixed(2)}`;
+        let displayData = localData;
+
+        // Apply Dashboard Filter if Active
+        if (isFilterActive) {
+            if (dashFilterSettings.start) displayData = displayData.filter(item => item.date >= dashFilterSettings.start);
+            if (dashFilterSettings.end) displayData = displayData.filter(item => item.date <= dashFilterSettings.end);
+            if (dashFilterSettings.cat !== 'All') displayData = displayData.filter(item => item.category === dashFilterSettings.cat);
+        } else {
+            // Default: This Month
+            const currentMonthStr = new Date().toISOString().substring(0, 7); 
+            displayData = displayData.filter(item => item.date.startsWith(currentMonthStr));
+        }
+
+        document.getElementById('totalSpent').innerText = `RM ${displayData.reduce((sum, item) => sum + item.amount, 0).toFixed(2)}`;
 
         const categories = {};
-        thisMonthData.forEach(item => { categories[item.category] = (categories[item.category] || 0) + item.amount; });
+        displayData.forEach(item => { categories[item.category] = (categories[item.category] || 0) + item.amount; });
 
         const ctx = document.getElementById('expenseChart').getContext('2d');
         if(myChart) myChart.destroy();
@@ -494,26 +597,24 @@
             data: { labels: Object.keys(categories), datasets: [{ data: Object.values(categories), backgroundColor: ['#e74c3c', '#9b59b6', '#f1c40f', '#1abc9c', '#34495e', '#e67e22'] }] },
             options: { 
                 responsive: true, maintainAspectRatio: false, cutout: '70%', 
-                plugins: { 
-                    legend: { position: 'right' },
-                    tooltip: {
-                        callbacks: {
-                            label: function(context) {
-                                let label = context.label || '';
-                                let value = context.parsed;
-                                let sum = context.dataset.data.reduce((a, b) => a + b, 0);
-                                let percentage = ((value * 100) / sum).toFixed(1) + "%";
-                                return `${label}: RM ${value.toFixed(2)} (${percentage})`;
-                            }
-                        }
-                    }
-                } 
+                plugins: { legend: { position: 'right' }, tooltip: { callbacks: { label: function(context) {
+                    let value = context.parsed; let sum = context.dataset.data.reduce((a, b) => a + b, 0);
+                    let percentage = ((value * 100) / sum).toFixed(1) + "%"; return `${context.label}: RM ${value.toFixed(2)} (${percentage})`;
+                }}}} 
             }
         });
 
         const listDiv = document.getElementById('recentTransactions');
         listDiv.innerHTML = '';
-        const sortedData = [...localData].sort((a,b) => new Date(b.date) - new Date(a.date));
+        
+        // UPGRADED SORTING: Sort by Date first, then ID (newest input on top)
+        const sortedData = [...displayData].sort((a,b) => {
+            const dateA = new Date(a.date).getTime();
+            const dateB = new Date(b.date).getTime();
+            if (dateB !== dateA) return dateB - dateA;
+            return b.id - a.id; 
+        });
+
         const recent = sortedData.slice(0, displayLimit);
         
         if(recent.length === 0) {
@@ -522,7 +623,6 @@
         }
 
         recent.forEach(item => {
-            // DASHBOARD PENCIL ICON KEPT HERE
             listDiv.innerHTML += `
                 <div class="list-item" onclick="openModal(${item.id})">
                     <div class="item-details">
@@ -602,7 +702,8 @@
             amount: parseFloat(document.getElementById('amount').value),
             method: document.getElementById('method').value,
             remark: finalRemark,
-            id: isEditing ? parseFloat(editId) : Date.now()
+            // Assign a precise timestamp ID so newest inputs are always sorted to the top
+            id: isEditing ? parseFloat(editId) : Date.now() 
         };
 
         if(isEditing) {
