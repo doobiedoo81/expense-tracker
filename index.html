@@ -43,7 +43,7 @@
         .item-details { flex: 1; cursor: pointer; }
         .item-details h4 { margin: 0; font-size: 1em; color: var(--primary); }
         .item-details p { margin: 5px 0 0; font-size: 0.8em; color: #7f8c8d; }
-        .item-amount { font-weight: bold; color: #e74c3c; margin: 0 15px; }
+        .item-amount { font-weight: bold; color: #e74c3c; margin: 0 15px; cursor: pointer; }
 
         /* Edit/Delete Icons */
         .item-actions { display: flex; gap: 10px; }
@@ -61,6 +61,7 @@
         input:focus, select:focus { outline: none; border-color: var(--accent); background: #fff; }
         .calc-box { background: #e8f4f8; padding: 10px 15px; border-radius: 8px; margin-top: 10px; border-left: 4px solid var(--accent); }
         .save-btn { width: 100%; padding: 15px; background: var(--accent); color: white; border: none; border-radius: 8px; font-weight: bold; font-size: 1.1em; margin-top: 25px; cursor: pointer; }
+        .save-btn:disabled { background: #bdc3c7; }
         #status { text-align: center; margin-top: 15px; font-weight: bold; min-height: 20px; }
 
         /* History View Tabs */
@@ -192,7 +193,7 @@
     let myChart = null;
     let displayLimit = 5;
 
-    // --- FETCH DATA ---
+    // --- FETCH DATA & FIX TIMEZONE ---
     async function fetchFromSheets() {
         const syncStatus = document.getElementById('syncStatus');
         if(syncStatus) syncStatus.innerText = "Syncing from Google Sheets...";
@@ -201,9 +202,18 @@
             const sheetData = await response.json();
             if (sheetData && !sheetData.error) {
                 localData = sheetData.map((item, index) => {
+                    
+                    // --- LOCAL TIMEZONE FIX ---
+                    let d = new Date(item.date);
+                    let localYear = d.getFullYear();
+                    let localMonth = String(d.getMonth() + 1).padStart(2, '0');
+                    let localDay = String(d.getDate()).padStart(2, '0');
+                    let correctedDate = `${localYear}-${localMonth}-${localDay}`;
+                    // --------------------------
+
                     return {
                         id: item.id || Date.now() + index, // Assign ID for editing
-                        date: new Date(item.date).toISOString().split('T')[0],
+                        date: correctedDate,               // Use corrected local date
                         category: item.category,
                         desc: item.desc,
                         amount: parseFloat(item.amount) || 0,
