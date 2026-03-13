@@ -8,19 +8,21 @@
     <meta name="mobile-web-app-capable" content="yes">
     <meta name="theme-color" content="#2c3e50">
 
-<link rel="manifest" href="manifest.json">
+    <link rel="manifest" href="manifest.json">
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Pro Expense Tracker</title>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <style>
+        /* Base Variables - These will be updated by JS when changing themes */
         :root { --primary: #2c3e50; --accent: #3498db; --bg: #f4f7f6; --card: #ffffff; --text: #333; }
-        body { font-family: 'Segoe UI', Tahoma, Geneva, sans-serif; background: var(--bg); margin: 0; padding: 0; color: var(--text); padding-bottom: 80px; }
+        
+        body { font-family: 'Segoe UI', Tahoma, Geneva, sans-serif; background: var(--bg); margin: 0; padding: 0; color: var(--text); padding-bottom: 80px; transition: background 0.3s, color 0.3s; }
         .container { max-width: 600px; margin: auto; padding: 20px; }
         
         /* Navigation */
-        .nav-bar { position: fixed; bottom: 0; width: 100%; max-width: 600px; background: var(--card); display: flex; justify-content: space-around; padding: 15px 0; box-shadow: 0 -2px 10px rgba(0,0,0,0.05); z-index: 1000; left: 50%; transform: translateX(-50%); }
-        .nav-item { font-weight: bold; color: #7f8c8d; cursor: pointer; text-transform: uppercase; font-size: 0.85em; padding: 5px 10px; display: flex; flex-direction: column; align-items: center; gap: 4px; }
+        .nav-bar { position: fixed; bottom: 0; width: 100%; max-width: 600px; background: var(--card); display: flex; justify-content: space-around; padding: 15px 0; box-shadow: 0 -2px 10px rgba(0,0,0,0.05); z-index: 1000; left: 50%; transform: translateX(-50%); transition: background 0.3s; }
+        .nav-item { font-weight: bold; color: #7f8c8d; cursor: pointer; text-transform: uppercase; font-size: 0.8em; padding: 5px 10px; display: flex; flex-direction: column; align-items: center; gap: 4px; }
         .nav-item.active { color: var(--accent); border-bottom: 2px solid var(--accent); }
 
         /* Views */
@@ -29,49 +31,55 @@
 
         /* Dashboard Cards */
         #syncStatus { text-align: center; font-size: 0.85em; color: #7f8c8d; margin-bottom: 15px; font-style: italic; }
-        .summary-card { background: linear-gradient(135deg, #3498db, #2980b9); color: white; padding: 20px; border-radius: 12px; text-align: center; margin-bottom: 20px; box-shadow: 0 4px 15px rgba(52, 152, 219, 0.3); }
+        
+        /* Updated Summary Card to use Theme Colors */
+        .summary-card { background: linear-gradient(135deg, var(--accent), var(--primary)); color: white; padding: 20px; border-radius: 12px; text-align: center; margin-bottom: 20px; box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2); }
         .summary-card h3 { margin: 0; font-size: 1em; opacity: 0.9; text-transform: uppercase; }
         .summary-card h1 { margin: 10px 0 0; font-size: 2.5em; }
         
-        .chart-container { background: var(--card); padding: 20px; border-radius: 12px; box-shadow: 0 2px 10px rgba(0,0,0,0.05); margin-bottom: 20px; max-height: 350px; display: flex; flex-direction: column; align-items: center; }
+        .chart-container { background: var(--card); padding: 20px; border-radius: 12px; box-shadow: 0 2px 10px rgba(0,0,0,0.05); margin-bottom: 20px; max-height: 350px; display: flex; flex-direction: column; align-items: center; transition: background 0.3s; }
         .chart-container h3 { margin-top: 0; color: var(--primary); width: 100%; text-align: center; }
         
         /* Lists & Items */
-        .recent-list { background: var(--card); border-radius: 12px; padding: 15px; box-shadow: 0 2px 10px rgba(0,0,0,0.05); }
+        .recent-list { background: var(--card); border-radius: 12px; padding: 15px; box-shadow: 0 2px 10px rgba(0,0,0,0.05); transition: background 0.3s; }
         .recent-list h3 { margin-top: 0; color: var(--primary); border-bottom: 2px solid #eee; padding-bottom: 10px; }
         .list-item { display: flex; justify-content: space-between; align-items: center; padding: 12px 0; border-bottom: 1px solid #eee; cursor: pointer; transition: background 0.2s; }
-        .list-item:hover { background: #f9f9f9; }
+        .list-item:hover { background: rgba(0,0,0,0.02); }
         .list-item:last-child { border-bottom: none; }
         .item-details h4 { margin: 0; font-size: 1em; color: var(--primary); }
         .item-details p { margin: 5px 0 0; font-size: 0.8em; color: #7f8c8d; }
-        .item-amount { font-weight: bold; color: #e74c3c; }
+        .item-amount { font-weight: bold; color: var(--accent); }
 
-        .load-more-btn { width: 100%; padding: 10px; background: #ecf0f1; color: #34495e; border: none; border-radius: 8px; font-weight: bold; cursor: pointer; margin-top: 10px; }
-        .load-more-btn:hover { background: #bdc3c7; }
+        .load-more-btn { width: 100%; padding: 10px; background: var(--bg); color: var(--primary); border: 2px solid var(--primary); border-radius: 8px; font-weight: bold; cursor: pointer; margin-top: 10px; }
 
-        /* Form */
-        .form-card { background: var(--card); padding: 25px; border-radius: 12px; box-shadow: 0 2px 10px rgba(0,0,0,0.05); }
+        /* Form & Settings View */
+        .form-card { background: var(--card); padding: 25px; border-radius: 12px; box-shadow: 0 2px 10px rgba(0,0,0,0.05); transition: background 0.3s; }
         .form-card h2 { margin-top: 0; color: var(--primary); border-bottom: 2px solid var(--accent); padding-bottom: 10px; text-align: center; }
         label { display: block; margin: 15px 0 5px; font-weight: 600; font-size: 0.9em; }
-        input, select { width: 100%; padding: 12px; border: 1px solid #ccc; border-radius: 8px; box-sizing: border-box; background: #fafafa; font-size: 1em; }
-        input:focus, select:focus { outline: none; border-color: var(--accent); background: #fff; }
-        .calc-box { background: #e8f4f8; padding: 10px 15px; border-radius: 8px; margin-top: 10px; border-left: 4px solid var(--accent); }
+        input, select { width: 100%; padding: 12px; border: 1px solid #ccc; border-radius: 8px; box-sizing: border-box; background: var(--bg); color: var(--text); font-size: 1em; transition: 0.3s; }
+        input:focus, select:focus { outline: none; border-color: var(--accent); background: var(--card); }
+        .calc-box { background: rgba(0,0,0,0.03); padding: 10px 15px; border-radius: 8px; margin-top: 10px; border-left: 4px solid var(--accent); }
         .save-btn { width: 100%; padding: 15px; background: var(--accent); color: white; border: none; border-radius: 8px; font-weight: bold; font-size: 1.1em; margin-top: 25px; cursor: pointer; transition: background 0.3s; }
         #status { text-align: center; margin-top: 15px; font-weight: bold; min-height: 20px; }
 
+        /* Theme Grid */
+        .theme-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-top: 20px; }
+        .theme-btn { padding: 15px 10px; border: none; border-radius: 8px; font-weight: bold; cursor: pointer; color: white; transition: 0.2s; box-shadow: 0 2px 5px rgba(0,0,0,0.1); }
+        .theme-btn:active { transform: scale(0.95); }
+
         /* History View Tabs */
-        .history-tabs { display: flex; margin-bottom: 15px; background: #e0e6ed; border-radius: 8px; overflow: hidden; }
+        .history-tabs { display: flex; margin-bottom: 15px; background: var(--bg); border-radius: 8px; overflow: hidden; }
         .history-tab { flex: 1; text-align: center; padding: 10px; font-weight: bold; cursor: pointer; color: #7f8c8d; transition: 0.3s; }
         .history-tab.active { background: var(--accent); color: white; }
 
         /* Modal Details */
         .modal-overlay { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); z-index: 2000; justify-content: center; align-items: center; }
-        .modal-content { background: white; padding: 25px; border-radius: 12px; width: 90%; max-width: 350px; position: relative; }
+        .modal-content { background: var(--card); color: var(--text); padding: 25px; border-radius: 12px; width: 90%; max-width: 350px; position: relative; }
         .modal-close { position: absolute; top: 15px; right: 15px; font-size: 1.5em; cursor: pointer; color: #95a5a6; }
         .modal-content h3 { margin-top: 0; border-bottom: 1px solid #eee; padding-bottom: 10px; color: var(--primary); }
         .modal-row { margin-bottom: 12px; display: flex; justify-content: space-between; border-bottom: 1px dashed #eee; padding-bottom: 5px; }
         .modal-row span:first-child { font-weight: bold; color: #7f8c8d; }
-        .modal-row span:last-child { text-align: right; color: #2c3e50; }
+        .modal-row span:last-child { text-align: right; color: var(--text); }
     </style>
 </head>
 <body>
@@ -109,7 +117,7 @@
                 <label>Category</label>
                 <select id="category">
                     <option value="Food">Food</option>
-                    <option value="Collection">Collection (Pokémon)</option>
+                    <option value="Collection">Collection</option>
                     <option value="Grocery">Grocery</option>
                     <option value="Subscription">Subscription</option>
                     <option value="Rental">Rental / Bills</option>
@@ -131,7 +139,7 @@
                 </div>
                 
                 <label>Description</label>
-                <input type="text" id="desc" placeholder="e.g. Lunch, Scizor Promo..." required>
+                <input type="text" id="desc" placeholder="e.g. Lunch, Promo..." required>
                 
                 <label>Total Amount (MYR)</label>
                 <input type="number" step="0.01" id="amount" required>
@@ -162,8 +170,28 @@
                 <div class="history-tab" onclick="switchHistoryTab('monthly', this)">Monthly History</div>
             </div>
 
-            <div id="historyContent" class="recent-list" style="box-shadow: none; padding: 0;">
+            <div id="historyContent" class="recent-list" style="box-shadow: none; padding: 0; background: transparent;">
                 </div>
+        </div>
+    </div>
+
+    <div id="settingsView" class="view">
+        <div class="form-card">
+            <h2>App Settings</h2>
+            <p style="text-align:center; color:#7f8c8d; font-size:0.9em;">Choose your app theme below.</p>
+            
+            <div class="theme-grid">
+                <button class="theme-btn" onclick="applyTheme('default')" style="background: #3498db;">Classic Blue</button>
+                <button class="theme-btn" onclick="applyTheme('tinkaton')" style="background: #e84393;">Tinkaton</button>
+                <button class="theme-btn" onclick="applyTheme('pikachu')" style="background: #f39c12; color: #2d3436;">Pikachu</button>
+                <button class="theme-btn" onclick="applyTheme('totodile')" style="background: #0984e3;">Totodile</button>
+                <button class="theme-btn" onclick="applyTheme('scizor')" style="background: #c0392b;">Scizor</button>
+                <button class="theme-btn" onclick="applyTheme('shinchan')" style="background: #ff5252;">Shinchan</button>
+                <button class="theme-btn" onclick="applyTheme('conan')" style="background: #2980b9;">Det. Conan</button>
+                <button class="theme-btn" onclick="applyTheme('marvelSnap')" style="background: #6c5ce7;">Marvel Snap</button>
+                <button class="theme-btn" onclick="applyTheme('dark')" style="background: #1e1e1e; border: 1px solid #333;">Dark Mode</button>
+                <button class="theme-btn" onclick="applyTheme('mint')" style="background: #16a085;">Fresh Mint</button>
+            </div>
         </div>
     </div>
 
@@ -173,6 +201,7 @@
     <div class="nav-item active" onclick="switchTab('dashboardView', this)">Dashboard</div>
     <div class="nav-item" onclick="switchTab('addView', this)">+ Add</div>
     <div class="nav-item" onclick="switchTab('historyView', this)">History</div>
+    <div class="nav-item" onclick="switchTab('settingsView', this)">Settings</div>
 </div>
 
 <div class="modal-overlay" id="txModal" onclick="closeModal(event)">
@@ -185,17 +214,54 @@
 
 <script>
     // ==========================================
-    // 1. PASTE YOUR APPS SCRIPT URL HERE
+    // 1. APPS SCRIPT URL & GLOBALS
     // ==========================================
     const scriptURL = 'https://script.google.com/macros/s/AKfycbydpRx2O_R6W0m-9ZowLmekJTnKjRTPr-YfyO_mYOE3Nw6PieXM6nTVZYxBJRClqKdL/exec'; 
-    
-    // ==========================================
-    // 2. STATE MANAGEMENT & GLOBALS
-    // ==========================================
     let localData = JSON.parse(localStorage.getItem('myExpenseData')) || [];
     let myChart = null;
-    let displayLimit = 5; // Start showing only 5 items
+    let displayLimit = 5; 
 
+    // ==========================================
+    // 2. THEME ENGINE LOGIC
+    // ==========================================
+    const themes = {
+        default: { primary: '#2c3e50', accent: '#3498db', bg: '#f4f7f6', card: '#ffffff', text: '#333' },
+        tinkaton: { primary: '#8e44ad', accent: '#e84393', bg: '#ffeaa7', card: '#ffffff', text: '#2d3436' },
+        pikachu: { primary: '#2d3436', accent: '#f39c12', bg: '#fff9c4', card: '#ffffff', text: '#2d3436' },
+        totodile: { primary: '#0984e3', accent: '#d63031', bg: '#e0f7fa', card: '#ffffff', text: '#2d3436' },
+        scizor: { primary: '#c0392b', accent: '#7f8c8d', bg: '#f5eef8', card: '#ffffff', text: '#2c3e50' },
+        shinchan: { primary: '#c0392b', accent: '#f1c40f', bg: '#ffeb3b1a', card: '#ffffff', text: '#333' },
+        conan: { primary: '#2980b9', accent: '#c0392b', bg: '#ecf0f1', card: '#ffffff', text: '#2c3e50' },
+        marvelSnap: { primary: '#6c5ce7', accent: '#fdcb6e', bg: '#2d3436', card: '#1e272e', text: '#f5f6fa' },
+        dark: { primary: '#bdc3c7', accent: '#3498db', bg: '#121212', card: '#1e1e1e', text: '#ecf0f1' },
+        mint: { primary: '#27ae60', accent: '#16a085', bg: '#e8f8f5', card: '#ffffff', text: '#2c3e50' }
+    };
+
+    function applyTheme(themeName) {
+        const theme = themes[themeName];
+        if(!theme) return;
+        
+        document.documentElement.style.setProperty('--primary', theme.primary);
+        document.documentElement.style.setProperty('--accent', theme.accent);
+        document.documentElement.style.setProperty('--bg', theme.bg);
+        document.documentElement.style.setProperty('--card', theme.card);
+        document.documentElement.style.setProperty('--text', theme.text);
+
+        // Update meta theme color for mobile browsers
+        document.querySelector('meta[name="theme-color"]').setAttribute('content', theme.primary);
+        
+        // Save choice
+        localStorage.setItem('savedTheme', themeName);
+    }
+
+    // Load saved theme on startup
+    const savedTheme = localStorage.getItem('savedTheme') || 'default';
+    applyTheme(savedTheme);
+
+
+    // ==========================================
+    // 3. DATA FETCHING
+    // ==========================================
     async function fetchFromSheets() {
         const syncStatus = document.getElementById('syncStatus');
         if(syncStatus) syncStatus.innerText = "Syncing from Google Sheets...";
@@ -208,7 +274,7 @@
                 localData = sheetData.map((item, index) => {
                     let formattedDate = new Date(item.date).toISOString().split('T')[0];
                     return {
-                        id: index, // Unique ID for modal matching
+                        id: index,
                         date: formattedDate,
                         category: item.category,
                         desc: item.desc,
@@ -231,7 +297,7 @@
     }
 
     // ==========================================
-    // 3. UI VIEW SWITCHING & CURRENCY LOGIC
+    // 4. UI VIEW SWITCHING & CURRENCY
     // ==========================================
     function switchTab(viewId, element) {
         document.querySelectorAll('.view').forEach(v => v.classList.remove('active'));
@@ -240,10 +306,10 @@
         element.classList.add('active');
         
         if(viewId === 'dashboardView') {
-            displayLimit = 5; // Reset limit when navigating back
+            displayLimit = 5; 
             updateDashboard();
         } else if (viewId === 'historyView') {
-            renderHistory('daily'); // Default to daily when opening
+            renderHistory('daily');
         }
     }
 
@@ -278,7 +344,7 @@
     exchangeRate.addEventListener('input', calculateTotal);
 
     // ==========================================
-    // 4. MODAL LOGIC
+    // 5. MODAL LOGIC
     // ==========================================
     function openModal(id) {
         const item = localData.find(x => x.id === id);
@@ -288,7 +354,7 @@
             <div class="modal-row"><span>Date:</span> <span>${item.date}</span></div>
             <div class="modal-row"><span>Item:</span> <span>${item.desc}</span></div>
             <div class="modal-row"><span>Category:</span> <span>${item.category}</span></div>
-            <div class="modal-row"><span>Amount:</span> <span style="font-size:1.2em; font-weight:bold; color:#e74c3c;">RM ${item.amount.toFixed(2)}</span></div>
+            <div class="modal-row"><span>Amount:</span> <span style="font-size:1.2em; font-weight:bold; color:var(--accent);">RM ${item.amount.toFixed(2)}</span></div>
             <div class="modal-row"><span>Method:</span> <span>${item.method}</span></div>
         `;
         
@@ -308,11 +374,10 @@
     }
 
     // ==========================================
-    // 5. RENDER DASHBOARD (Chart + Load More)
+    // 6. RENDER DASHBOARD (Chart + Load More)
     // ==========================================
     function updateDashboard() {
-        // Filter only current month for Dashboard Totals
-        const currentMonthStr = new Date().toISOString().substring(0, 7); // YYYY-MM
+        const currentMonthStr = new Date().toISOString().substring(0, 7); 
         const thisMonthData = localData.filter(item => item.date.startsWith(currentMonthStr));
 
         const total = thisMonthData.reduce((sum, item) => sum + item.amount, 0);
@@ -325,6 +390,8 @@
 
         const ctx = document.getElementById('expenseChart').getContext('2d');
         if(myChart) myChart.destroy();
+        
+        // Define vibrant chart colors that work on dark/light themes
         myChart = new Chart(ctx, {
             type: 'doughnut',
             data: {
@@ -337,7 +404,7 @@
             options: { 
                 responsive: true, maintainAspectRatio: false, cutout: '70%', 
                 plugins: { 
-                    legend: { position: 'right' },
+                    legend: { position: 'right', labels: { color: getComputedStyle(document.documentElement).getPropertyValue('--text') } },
                     tooltip: {
                         callbacks: {
                             label: function(context) {
@@ -353,7 +420,6 @@
             }
         });
 
-        // Render List with Load More
         const listDiv = document.getElementById('recentTransactions');
         listDiv.innerHTML = '';
         
@@ -388,7 +454,7 @@
     }
 
     // ==========================================
-    // 6. HISTORY LOGIC (Daily / Monthly)
+    // 7. HISTORY LOGIC
     // ==========================================
     function switchHistoryTab(type, element) {
         document.querySelectorAll('.history-tab').forEach(t => t.classList.remove('active'));
@@ -408,7 +474,6 @@
         const groups = {};
 
         if (type === 'daily') {
-            // Only group current month's data by day
             const currentMonthStr = new Date().toISOString().substring(0, 7);
             const thisMonthData = localData.filter(item => item.date.startsWith(currentMonthStr));
             
@@ -416,14 +481,12 @@
                 groups[item.date] = (groups[item.date] || 0) + item.amount;
             });
         } else if (type === 'monthly') {
-            // Group ALL data by YYYY-MM
             localData.forEach(item => {
-                const monthStr = item.date.substring(0, 7); // Gets YYYY-MM
+                const monthStr = item.date.substring(0, 7); 
                 groups[monthStr] = (groups[monthStr] || 0) + item.amount;
             });
         }
 
-        // Sort descending (newest first)
         const sortedKeys = Object.keys(groups).sort((a,b) => new Date(b) - new Date(a));
 
         if(sortedKeys.length === 0) {
@@ -432,7 +495,6 @@
         }
 
         sortedKeys.forEach(key => {
-            // Format nice label
             let label = key;
             if(type === 'monthly') {
                 const dateObj = new Date(key + "-01");
@@ -442,7 +504,7 @@
             contentDiv.innerHTML += `
                 <div class="list-item" style="cursor:default;">
                     <div class="item-details">
-                        <h4 style="font-size:1.1em; color:#34495e;">${label}</h4>
+                        <h4 style="font-size:1.1em; color:var(--primary);">${label}</h4>
                     </div>
                     <div class="item-amount" style="font-size:1.1em;">RM ${groups[key].toFixed(2)}</div>
                 </div>
@@ -451,14 +513,14 @@
     }
 
     // ==========================================
-    // 7. FORM SUBMISSION (POST TO SHEETS)
+    // 8. FORM SUBMISSION
     // ==========================================
     document.getElementById('expenseForm').addEventListener('submit', e => {
         e.preventDefault();
         const btn = document.getElementById('submitBtn');
         const status = document.getElementById('status');
         btn.disabled = true;
-        status.style.color = "#333";
+        status.style.color = "var(--text)";
         status.innerText = "Sending to Google Sheets...";
 
         let userRemark = document.getElementById('remark').value.trim();
@@ -484,7 +546,7 @@
             status.style.color = "#27ae60";
             status.innerText = "Saved successfully!";
             
-            fetchFromSheets(); // Re-sync
+            fetchFromSheets(); 
 
             document.getElementById('expenseForm').reset();
             document.getElementById('date').valueAsDate = new Date(); 
