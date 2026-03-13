@@ -29,11 +29,8 @@
         .view { display: none; opacity: 0; transition: opacity 0.3s ease; }
         .view.active { display: block; opacity: 1; }
 
-        /* Dashboard Cards & Filters */
+        /* Dashboard Cards */
         #syncStatus { text-align: center; font-size: 0.85em; color: #7f8c8d; margin-bottom: 10px; font-style: italic; }
-        
-        .filter-toggle { text-align: right; margin-bottom: 10px; font-size: 0.9em; color: var(--accent); font-weight: bold; cursor: pointer; }
-        .dashboard-filter { display: none; background: #e8f4f8; padding: 15px; border-radius: 12px; margin-bottom: 15px; border: 1px solid #d1e8f0; }
         
         .summary-card { background: linear-gradient(135deg, #3498db, #2980b9); color: white; padding: 20px; border-radius: 12px; text-align: center; margin-bottom: 20px; box-shadow: 0 4px 15px rgba(52, 152, 219, 0.3); }
         .summary-card h3 { margin: 0; font-size: 1em; opacity: 0.9; text-transform: uppercase; }
@@ -42,9 +39,11 @@
         .chart-container { background: var(--card); padding: 20px; border-radius: 12px; box-shadow: 0 2px 10px rgba(0,0,0,0.05); margin-bottom: 20px; max-height: 350px; display: flex; flex-direction: column; align-items: center; }
         .chart-container h3 { margin-top: 0; color: var(--primary); width: 100%; text-align: center; }
         
-        /* Lists & Items Layout Fixes (1 Line Amount + Ellipsis) */
+        /* Lists & Items Layout Fixes */
         .recent-list { background: var(--card); border-radius: 12px; padding: 15px; box-shadow: 0 2px 10px rgba(0,0,0,0.05); }
-        .recent-list h3 { margin-top: 0; color: var(--primary); border-bottom: 2px solid #eee; padding-bottom: 10px; }
+        .recent-list-header { display: flex; justify-content: space-between; align-items: center; border-bottom: 2px solid #eee; padding-bottom: 10px; margin-bottom: 5px; }
+        .recent-list-header h3 { margin: 0; color: var(--primary); border: none; padding: 0; }
+        
         .list-item { display: flex; justify-content: space-between; align-items: center; padding: 12px 0; border-bottom: 1px solid #eee; transition: background 0.2s; cursor: pointer; }
         .list-item:hover { background: #f9f9f9; }
         .list-item:last-child { border-bottom: none; }
@@ -55,17 +54,18 @@
         
         .item-amount { font-weight: bold; color: #e74c3c; white-space: nowrap; flex-shrink: 0; text-align: right; }
         .item-actions { display: flex; align-items: center; gap: 10px; flex-shrink: 0; white-space: nowrap; }
-        .action-icon { font-size: 1.2em; cursor: pointer; opacity: 0.7; transition: 0.2s;}
+        .action-icon { font-size: 1.2em; cursor: pointer; opacity: 0.7; transition: 0.2s; display: flex; align-items: center; justify-content: center;}
         .action-icon:hover { opacity: 1; transform: scale(1.1); }
 
         .load-more-btn { width: 100%; padding: 10px; background: #ecf0f1; color: #34495e; border: none; border-radius: 8px; font-weight: bold; cursor: pointer; margin-top: 10px; }
+        .load-more-btn:hover { background: #bdc3c7; }
 
         /* Forms & Inputs */
         label { display: block; margin: 15px 0 5px; font-weight: 600; font-size: 0.9em; }
         input, select { width: 100%; padding: 12px; border: 1px solid #ccc; border-radius: 8px; box-sizing: border-box; background: #fafafa; font-size: 1em; }
         input:focus, select:focus { outline: none; border-color: var(--accent); background: #fff; }
         .calc-box { background: #e8f4f8; padding: 10px 15px; border-radius: 8px; margin-top: 10px; border-left: 4px solid var(--accent); }
-        .save-btn { width: 100%; padding: 15px; background: var(--accent); color: white; border: none; border-radius: 8px; font-weight: bold; font-size: 1.1em; margin-top: 15px; cursor: pointer; }
+        .save-btn { width: 100%; padding: 15px; background: var(--accent); color: white; border: none; border-radius: 8px; font-weight: bold; font-size: 1.1em; margin-top: 25px; cursor: pointer; }
         .save-btn:disabled { background: #bdc3c7; }
         #status { text-align: center; margin-top: 15px; font-weight: bold; min-height: 20px; }
 
@@ -91,34 +91,6 @@
     <div id="dashboardView" class="view active">
         <div id="syncStatus">Fetching latest data...</div>
         
-        <div class="filter-toggle" onclick="toggleDashFilter()">🔍 Smart Filter</div>
-        <div class="dashboard-filter" id="dashFilterPanel">
-            <div style="display:flex; gap: 10px; margin-bottom: 10px;">
-                <div style="flex: 1;">
-                    <label style="margin-top:0; font-size:0.8em;">Start Date</label>
-                    <input type="date" id="dashFilterStart" style="padding: 8px;">
-                </div>
-                <div style="flex: 1;">
-                    <label style="margin-top:0; font-size:0.8em;">End Date</label>
-                    <input type="date" id="dashFilterEnd" style="padding: 8px;">
-                </div>
-            </div>
-            <label style="margin-top:0; font-size:0.8em;">Category</label>
-            <select id="dashFilterCat" style="padding: 8px; margin-bottom: 10px;">
-                <option value="All">All Categories</option>
-                <option value="Food">Food</option>
-                <option value="Collection">Collection</option>
-                <option value="Grocery">Grocery</option>
-                <option value="Subscription">Subscription</option>
-                <option value="Rental">Rental / Bills</option>
-                <option value="Loan">Loan</option>
-            </select>
-            <div style="display:flex; gap:10px;">
-                <button class="save-btn" style="flex:1; margin-top:5px; padding:10px;" onclick="applyDashFilter()">Apply</button>
-                <button class="save-btn" style="flex:1; margin-top:5px; padding:10px; background:#95a5a6;" onclick="clearDashFilter()">Clear</button>
-            </div>
-        </div>
-
         <div class="summary-card">
             <h3 id="dashboardTitle">Total Spent (This Month)</h3>
             <h1 id="totalSpent">RM 0.00</h1>
@@ -130,7 +102,22 @@
             </div>
         </div>
         <div class="recent-list">
-            <h3 id="recentListTitle">Recent Transactions</h3>
+            <div class="recent-list-header">
+                <h3 id="recentListTitle">Recent Transactions</h3>
+                <span class="action-icon" onclick="openFilterModal()" title="Smart Filter">
+                    <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="var(--accent)" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                        <line x1="4" y1="21" x2="4" y2="14"></line>
+                        <line x1="4" y1="10" x2="4" y2="3"></line>
+                        <line x1="12" y1="21" x2="12" y2="12"></line>
+                        <line x1="12" y1="8" x2="12" y2="3"></line>
+                        <line x1="20" y1="21" x2="20" y2="16"></line>
+                        <line x1="20" y1="12" x2="20" y2="3"></line>
+                        <line x1="1" y1="14" x2="7" y2="14"></line>
+                        <line x1="9" y1="8" x2="15" y2="8"></line>
+                        <line x1="17" y1="16" x2="23" y2="16"></line>
+                    </svg>
+                </span>
+            </div>
             <div id="recentTransactions"></div>
         </div>
     </div>
@@ -153,6 +140,40 @@
 <div class="nav-bar">
     <div class="nav-item active" onclick="switchTab('dashboardView', this)">Dashboard</div>
     <div class="nav-item" onclick="switchTab('historyView', this)">History</div>
+</div>
+
+<div class="modal-overlay" id="filterModal" style="z-index: 2005;">
+    <div class="modal-content">
+        <span class="modal-close" onclick="closeFilterModal()">&times;</span>
+        <h2 style="margin-top: 0; color: var(--primary); border-bottom: 2px solid var(--accent); padding-bottom: 10px; text-align: center;">Smart Filter</h2>
+        
+        <div style="display:flex; gap: 10px; margin-bottom: 10px; margin-top: 20px;">
+            <div style="flex: 1;">
+                <label style="margin-top:0; font-size:0.8em;">Start Date</label>
+                <input type="date" id="dashFilterStart" style="padding: 8px;">
+            </div>
+            <div style="flex: 1;">
+                <label style="margin-top:0; font-size:0.8em;">End Date</label>
+                <input type="date" id="dashFilterEnd" style="padding: 8px;">
+            </div>
+        </div>
+        
+        <label style="margin-top:0; font-size:0.8em;">Category</label>
+        <select id="dashFilterCat" style="padding: 8px; margin-bottom: 20px;">
+            <option value="All">All Categories</option>
+            <option value="Food">Food</option>
+            <option value="Collection">Collection</option>
+            <option value="Grocery">Grocery</option>
+            <option value="Subscription">Subscription</option>
+            <option value="Rental">Rental / Bills</option>
+            <option value="Loan">Loan</option>
+        </select>
+        
+        <div style="display:flex; gap:10px;">
+            <button class="save-btn" style="flex:1; margin-top:0; padding:12px;" onclick="applyDashFilter()">Apply Search</button>
+            <button class="save-btn" style="flex:1; margin-top:0; padding:12px; background:#95a5a6;" onclick="clearDashFilter()">Reset</button>
+        </div>
+    </div>
 </div>
 
 <div class="modal-overlay" id="addModal">
@@ -268,7 +289,7 @@
                     let localDay = String(d.getDate()).padStart(2, '0');
                     let correctedDate = `${localYear}-${localMonth}-${localDay}`;
                     return {
-                        id: item.id || Date.now() + index, // IDs used for secondary sorting
+                        id: item.id || Date.now() + index, // IDs used for exact timestamps
                         date: correctedDate,               
                         category: item.category,
                         desc: item.desc,
@@ -306,10 +327,13 @@
         }
     }
 
-    // --- DASHBOARD SMART FILTER LOGIC ---
-    function toggleDashFilter() {
-        const panel = document.getElementById('dashFilterPanel');
-        panel.style.display = panel.style.display === 'none' || panel.style.display === '' ? 'block' : 'none';
+    // --- FILTER MODAL LOGIC ---
+    function openFilterModal() {
+        document.getElementById('filterModal').style.display = 'flex';
+    }
+
+    function closeFilterModal() {
+        document.getElementById('filterModal').style.display = 'none';
     }
 
     function applyDashFilter() {
@@ -317,10 +341,11 @@
         dashFilterSettings.end = document.getElementById('dashFilterEnd').value;
         dashFilterSettings.cat = document.getElementById('dashFilterCat').value;
         isFilterActive = true;
-        displayLimit = 5; // Reset limit on new search
+        displayLimit = 5; 
         document.getElementById('dashboardTitle').innerText = "Total Spent (Filtered)";
         document.getElementById('recentListTitle').innerText = "Filtered Transactions";
         updateDashboard();
+        closeFilterModal();
     }
 
     function clearDashFilter() {
@@ -332,8 +357,8 @@
         displayLimit = 5;
         document.getElementById('dashboardTitle').innerText = "Total Spent (This Month)";
         document.getElementById('recentListTitle').innerText = "Recent Transactions";
-        document.getElementById('dashFilterPanel').style.display = 'none';
         updateDashboard();
+        closeFilterModal();
     }
 
     // --- POPUP MODAL (ADD / EDIT) LOGIC ---
@@ -376,7 +401,6 @@
         document.getElementById('formTitle').innerText = "Edit Expense";
         document.getElementById('submitBtn').innerText = "Update Expense";
         
-        // Make sure previous modals close before opening Edit
         closeModal(); 
         closeDrilldownModal();
         document.getElementById('addModal').style.display = 'flex';
@@ -416,7 +440,7 @@
     // --- CUSTOM DELETE LOGIC ---
     function triggerDelete(id) {
         itemToDeleteId = id;
-        closeModal(); // Close the details popup first
+        closeModal(); 
         document.getElementById('deleteConfirmModal').style.display = 'flex';
     }
 
@@ -431,7 +455,6 @@
         localStorage.setItem('myExpenseData', JSON.stringify(localData));
         updateDashboard();
         
-        // Refresh history view if we deleted from there
         if (document.getElementById('historyView').classList.contains('active')) {
             const activeTab = document.querySelector('.history-tab.active').innerText.toLowerCase();
             renderHistory(activeTab);
@@ -492,7 +515,7 @@
             title.innerText = `Transactions: ${key}`;
             const dayData = localData.filter(item => item.date === key);
             
-            // SORTING FIX: Sort by Date first (implicit here), then ID (Newest input first)
+            // EXACT TIME SORTING: Sort by ID (Timestamp)
             dayData.sort((a, b) => b.id - a.id);
 
             if (dayData.length === 0) {
@@ -702,7 +725,6 @@
             amount: parseFloat(document.getElementById('amount').value),
             method: document.getElementById('method').value,
             remark: finalRemark,
-            // Assign a precise timestamp ID so newest inputs are always sorted to the top
             id: isEditing ? parseFloat(editId) : Date.now() 
         };
 
