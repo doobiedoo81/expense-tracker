@@ -13,9 +13,24 @@
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <style>
         :root { --primary: #2c3e50; --accent: #3498db; --bg: #f4f7f6; --card: #ffffff; --text: #333; }
-        body { font-family: 'Segoe UI', Tahoma, Geneva, sans-serif; background: var(--bg); margin: 0; padding: 0; color: var(--text); padding-bottom: 80px; }
+        body { font-family: 'Segoe UI', Tahoma, Geneva, sans-serif; background: var(--bg); margin: 0; padding: 0; color: var(--text); padding-bottom: 80px; overflow-x: hidden; }
         .container { max-width: 600px; margin: auto; padding: 20px; }
         
+        /* --- NEW: SPLASH BOOT SCREEN --- */
+        .splash-screen {
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            background: var(--primary); z-index: 9999;
+            display: flex; flex-direction: column; justify-content: center; align-items: center;
+            transition: opacity 0.6s ease;
+        }
+        .splash-title { color: white; font-size: 2.2em; font-weight: bold; margin-bottom: 10px; letter-spacing: 1px; }
+        .splash-subtitle { color: #bdc3c7; font-size: 1em; margin-bottom: 40px; }
+        
+        .progress-container { width: 70%; max-width: 300px; height: 6px; background: rgba(255,255,255,0.2); border-radius: 10px; overflow: hidden; margin-bottom: 15px; }
+        .progress-bar { width: 0%; height: 100%; background: var(--accent); border-radius: 10px; transition: width 0.4s ease; }
+        .progress-text { color: #ecf0f1; font-size: 0.9em; font-style: italic; transition: opacity 0.3s; }
+        /* ------------------------------- */
+
         /* Navigation */
         .nav-bar { position: fixed; bottom: 0; width: 100%; max-width: 600px; background: var(--card); display: flex; justify-content: space-around; padding: 15px 0; box-shadow: 0 -2px 10px rgba(0,0,0,0.05); z-index: 1000; left: 50%; transform: translateX(-50%); }
         .nav-item { flex: 1; font-weight: bold; color: #7f8c8d; cursor: pointer; text-transform: uppercase; font-size: 0.85em; padding: 5px 10px; display: flex; flex-direction: column; align-items: center; gap: 4px; border-bottom: 2px solid transparent;}
@@ -29,8 +44,11 @@
         .view { display: none; opacity: 0; transition: opacity 0.3s ease; }
         .view.active { display: block; opacity: 1; }
 
-        /* Dashboard Cards */
-        #syncStatus { text-align: center; font-size: 0.85em; color: #7f8c8d; margin-bottom: 10px; font-style: italic; }
+        /* Dashboard Cards & Filters */
+        #syncStatus { display: none; /* Hidden now because splash handles it */ }
+        
+        .filter-toggle { text-align: right; margin-bottom: 10px; font-size: 0.9em; color: var(--accent); font-weight: bold; cursor: pointer; }
+        .dashboard-filter { display: none; background: #e8f4f8; padding: 15px; border-radius: 12px; margin-bottom: 15px; border: 1px solid #d1e8f0; }
         
         .summary-card { background: linear-gradient(135deg, #3498db, #2980b9); color: white; padding: 20px; border-radius: 12px; text-align: center; margin-bottom: 20px; box-shadow: 0 4px 15px rgba(52, 152, 219, 0.3); }
         .summary-card h3 { margin: 0; font-size: 1em; opacity: 0.9; text-transform: uppercase; }
@@ -86,10 +104,19 @@
 </head>
 <body>
 
+<div id="splashScreen" class="splash-screen">
+    <div class="splash-title">My Tracker</div>
+    <div class="splash-subtitle">Pro Expense Management</div>
+    <div class="progress-container">
+        <div id="splashBar" class="progress-bar"></div>
+    </div>
+    <div id="splashText" class="progress-text">Initiating secure connection...</div>
+</div>
+
 <div class="container">
     
     <div id="dashboardView" class="view active">
-        <div id="syncStatus">Fetching latest data...</div>
+        <div id="syncStatus"></div>
         
         <div class="summary-card">
             <h3 id="dashboardTitle">Total Spent (This Month)</h3>
@@ -258,6 +285,34 @@
 </div>
 
 <script>
+    // --- APP BOOT & SPLASH LOGIC ---
+    let splashTimeouts = [];
+    function startSplash() {
+        const bar = document.getElementById('splashBar');
+        const text = document.getElementById('splashText');
+        splashTimeouts.push(setTimeout(() => { bar.style.width = '30%'; text.innerText = 'Warming up your data...'; }, 200));
+        splashTimeouts.push(setTimeout(() => { bar.style.width = '65%'; text.innerText = 'Organizing transactions...'; }, 1000));
+        splashTimeouts.push(setTimeout(() => { bar.style.width = '85%'; }, 2500));
+    }
+    
+    function endSplash() {
+        splashTimeouts.forEach(t => clearTimeout(t)); 
+        const bar = document.getElementById('splashBar');
+        const text = document.getElementById('splashText');
+        const splash = document.getElementById('splashScreen');
+        
+        bar.style.width = '100%';
+        text.innerText = 'Opening the app...';
+        
+        setTimeout(() => {
+            splash.style.opacity = '0';
+            setTimeout(() => { splash.style.display = 'none'; }, 600); 
+        }, 500); 
+    }
+    
+    startSplash(); // Kick off animation immediately
+
+    // --- MAIN APP LOGIC ---
     const scriptURL = 'https://script.google.com/macros/s/AKfycbydpRx2O_R6W0m-9ZowLmekJTnKjRTPr-YfyO_mYOE3Nw6PieXM6nTVZYxBJRClqKdL/exec'; 
     
     let localData = JSON.parse(localStorage.getItem('myExpenseData')) || [];
@@ -274,8 +329,6 @@
 
     // --- FETCH DATA & FIX TIMEZONE ---
     async function fetchFromSheets() {
-        const syncStatus = document.getElementById('syncStatus');
-        if(syncStatus) syncStatus.innerText = "Syncing from Google Sheets...";
         try {
             const response = await fetch(scriptURL);
             const sheetData = await response.json();
@@ -287,7 +340,7 @@
                     let localDay = String(d.getDate()).padStart(2, '0');
                     let correctedDate = `${localYear}-${localMonth}-${localDay}`;
                     return {
-                        id: item.id || Date.now() + index, // IDs used for exact timestamps
+                        id: item.id || Date.now() + index, 
                         date: correctedDate,               
                         category: item.category,
                         desc: item.desc,
@@ -298,13 +351,15 @@
                 });
                 localStorage.setItem('myExpenseData', JSON.stringify(localData));
                 updateDashboard();
-                if(syncStatus) syncStatus.innerText = "Data up to date!";
-                setTimeout(() => { if(syncStatus) syncStatus.innerText = ""; }, 2000);
+                endSplash();
+            } else {
+                updateDashboard();
+                endSplash();
             }
         } catch (error) {
             console.error("Fetch Error:", error);
-            if(syncStatus) syncStatus.innerText = "Offline mode (Showing cached data)";
             updateDashboard();
+            endSplash(); // Close splash even if offline
         }
     }
 
@@ -463,15 +518,9 @@
     }
 
     function syncEditRemoveToSheets() {
-        const syncStatus = document.getElementById('syncStatus');
-        if(syncStatus) syncStatus.innerText = "Rewriting Sheets history...";
-        
         fetch(scriptURL, {
             method: 'POST', mode: 'no-cors', headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({ command: "REWRITE_SHEET", payload: localData })
-        }).then(() => {
-            if(syncStatus) syncStatus.innerText = "Sheets updated successfully!";
-            setTimeout(() => { if(syncStatus) syncStatus.innerText = ""; }, 2000);
         });
     }
 
@@ -513,7 +562,6 @@
             title.innerText = `Transactions: ${key}`;
             const dayData = localData.filter(item => item.date === key);
             
-            // EXACT TIME SORTING: Sort by ID (Timestamp)
             dayData.sort((a, b) => b.id - a.id);
 
             if (dayData.length === 0) {
@@ -600,17 +648,15 @@
 
     function closeDrilldownModal() { document.getElementById('drilldownModal').style.display = 'none'; }
 
-    // --- DASHBOARD RENDER (WITH FILTERS & UPGRADED SORTING) ---
+    // --- DASHBOARD RENDER ---
     function updateDashboard() {
         let displayData = localData;
 
-        // Apply Dashboard Filter if Active
         if (isFilterActive) {
             if (dashFilterSettings.start) displayData = displayData.filter(item => item.date >= dashFilterSettings.start);
             if (dashFilterSettings.end) displayData = displayData.filter(item => item.date <= dashFilterSettings.end);
             if (dashFilterSettings.cat !== 'All') displayData = displayData.filter(item => item.category === dashFilterSettings.cat);
         } else {
-            // Default: This Month
             const currentMonthStr = new Date().toISOString().substring(0, 7); 
             displayData = displayData.filter(item => item.date.startsWith(currentMonthStr));
         }
@@ -647,7 +693,6 @@
         const listDiv = document.getElementById('recentTransactions');
         listDiv.innerHTML = '';
         
-        // UPGRADED SORTING: Sort by Date first, then ID (newest input on top)
         const sortedData = [...displayData].sort((a,b) => {
             const dateA = new Date(a.date).getTime();
             const dateB = new Date(b.date).getTime();
@@ -731,7 +776,7 @@
         let userRemark = document.getElementById('remark').value.trim();
         let finalRemark = userRemark;
         if (currency.value !== 'MYR') {
-            const fxNote = `[${foreignAmount.value} ${currency.value} @ ${exchangeRate.value}]`;
+            const fxNote = `[${document.getElementById('foreignAmount').value} ${currency.value} @ ${document.getElementById('exchangeRate').value}]`;
             finalRemark = userRemark ? `${userRemark} | ${fxNote}` : fxNote;
         }
 
@@ -742,7 +787,6 @@
             amount: parseFloat(document.getElementById('amount').value),
             method: document.getElementById('method').value,
             remark: finalRemark,
-            // Assign a precise timestamp ID so newest inputs are always sorted to the top
             id: isEditing ? parseFloat(editId) : Date.now() 
         };
 
@@ -775,6 +819,5 @@
 
     window.onload = fetchFromSheets;
 </script>
-
 </body>
 </html>
