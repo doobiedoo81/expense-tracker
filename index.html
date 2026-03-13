@@ -49,6 +49,11 @@
         .item-details p { margin: 5px 0 0; font-size: 0.8em; color: #7f8c8d; }
         .item-amount { font-weight: bold; color: #e74c3c; margin: 0 15px; text-align: right;}
 
+        /* Edit/Delete Icons */
+        .item-actions { display: flex; gap: 10px; }
+        .action-icon { font-size: 1.2em; cursor: pointer; opacity: 0.7; transition: 0.2s;}
+        .action-icon:hover { opacity: 1; transform: scale(1.1); }
+
         .load-more-btn { width: 100%; padding: 10px; background: #ecf0f1; color: #34495e; border: none; border-radius: 8px; font-weight: bold; cursor: pointer; margin-top: 10px; }
         .load-more-btn:hover { background: #bdc3c7; }
 
@@ -260,7 +265,7 @@
         document.getElementById('submitBtn').innerText = "Save Expense";
         document.getElementById('foreignSection').style.display = 'none';
         document.getElementById('amount').readOnly = false;
-        document.getElementById('status').innerText = ""; // BUG FIX: Clear status text
+        document.getElementById('status').innerText = "";
         document.getElementById('addModal').style.display = 'flex';
     }
 
@@ -287,7 +292,7 @@
             document.getElementById('remark').value = item.remark || "";
         }
 
-        document.getElementById('status').innerText = ""; // BUG FIX: Clear status text
+        document.getElementById('status').innerText = ""; 
         document.getElementById('formTitle').innerText = "Edit Expense";
         document.getElementById('submitBtn').innerText = "Update Expense";
         document.getElementById('addModal').style.display = 'flex';
@@ -361,7 +366,6 @@
             html += `<div class="modal-row" style="flex-direction:column; border:none;"><span>Remark:</span> <span style="text-align:left; margin-top:5px; font-style:italic;">${item.remark}</span></div>`;
         }
         
-        // UPGRADED: Added Edit and Delete buttons inside the popup
         html += `
             <div style="display: flex; gap: 10px; margin-top: 25px;">
                 <button style="flex: 1; padding: 12px; background: #f39c12; color: white; border: none; border-radius: 8px; font-weight: bold; cursor: pointer; font-size: 1.1em;" onclick="closeModal(); startEditing(${item.id})">Edit</button>
@@ -389,14 +393,16 @@
                 body.innerHTML = '<p style="text-align:center; color:#999;">No data.</p>';
             } else {
                 dayData.forEach(item => {
-                    // Make daily history items clickable to open standard details modal
                     body.innerHTML += `
                         <div style="border-bottom: 1px dashed #eee; padding: 12px 0; display: flex; justify-content: space-between; align-items: center; cursor: pointer;" onclick="closeDrilldownModal(); openModal(${item.id})">
                             <div>
                                 <div style="font-weight: bold; color: var(--primary);">${item.desc}</div>
                                 <div style="font-size: 0.8em; color: #7f8c8d;">${item.category} • ${item.method}</div>
                             </div>
-                            <div style="font-weight: bold; color: #e74c3c;">RM ${item.amount.toFixed(2)}</div>
+                            <div style="display: flex; align-items: center; gap: 10px;">
+                                <div style="font-weight: bold; color: #e74c3c;">RM ${item.amount.toFixed(2)}</div>
+                                <span class="action-icon" style="color:#f39c12; font-size: 1.2em;" onclick="event.stopPropagation(); closeDrilldownModal(); startEditing(${item.id})">✏️</span>
+                            </div>
                         </div>
                     `;
                 });
@@ -514,14 +520,17 @@
         }
 
         recent.forEach(item => {
-            // Cleaned list item, entire row is clickable
+            // PENCIL ICON ADDED BACK HERE
             listDiv.innerHTML += `
                 <div class="list-item" onclick="openModal(${item.id})">
                     <div class="item-details">
                         <h4>${item.desc}</h4>
                         <p>${item.date} • ${item.category}</p>
                     </div>
-                    <div class="item-amount">RM ${item.amount.toFixed(2)}</div>
+                    <div class="item-actions">
+                        <div class="item-amount">RM ${item.amount.toFixed(2)}</div>
+                        <span class="action-icon" style="color:#f39c12;" onclick="event.stopPropagation(); startEditing(${item.id})">✏️</span>
+                    </div>
                 </div>
             `;
         });
@@ -603,8 +612,7 @@
             
             status.style.color = "#27ae60";
             status.innerText = "Updated successfully!";
-            setTimeout(() => { closeAddModal(); }, 800);
-            btn.disabled = false;
+            setTimeout(() => { closeAddModal(); btn.disabled = false; }, 800);
         } else {
             fetch(scriptURL, {
                 method: 'POST', mode: 'no-cors', headers: { 'Content-Type': 'application/json' },
@@ -613,8 +621,7 @@
                 status.style.color = "#27ae60";
                 status.innerText = "Saved successfully!";
                 fetchFromSheets(); 
-                setTimeout(() => { closeAddModal(); }, 1000);
-                btn.disabled = false;
+                setTimeout(() => { closeAddModal(); btn.disabled = false; }, 1000);
             }).catch(() => {
                 status.style.color = "#c0392b";
                 status.innerText = "Error syncing to Sheets.";
