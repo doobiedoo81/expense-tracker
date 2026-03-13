@@ -22,24 +22,7 @@
         .nav-item.active { color: var(--accent); border-bottom: 2px solid var(--accent); }
 
         /* Floating Action Button (FAB) */
-        .fab {
-            position: fixed;
-            bottom: 80px; /* Sits just above the bottom nav bar */
-            right: 20px;
-            background: var(--accent);
-            color: white;
-            width: 60px;
-            height: 60px;
-            border-radius: 50%;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            font-size: 32px;
-            box-shadow: 0 4px 15px rgba(52, 152, 219, 0.4);
-            cursor: pointer;
-            z-index: 999;
-            transition: transform 0.2s;
-        }
+        .fab { position: fixed; bottom: 80px; right: 20px; background: var(--accent); color: white; width: 60px; height: 60px; border-radius: 50%; display: flex; justify-content: center; align-items: center; font-size: 32px; box-shadow: 0 4px 15px rgba(52, 152, 219, 0.4); cursor: pointer; z-index: 999; transition: transform 0.2s; }
         .fab:active { transform: scale(0.95); }
 
         /* Views */
@@ -58,13 +41,13 @@
         /* Lists & Items */
         .recent-list { background: var(--card); border-radius: 12px; padding: 15px; box-shadow: 0 2px 10px rgba(0,0,0,0.05); }
         .recent-list h3 { margin-top: 0; color: var(--primary); border-bottom: 2px solid #eee; padding-bottom: 10px; }
-        .list-item { display: flex; justify-content: space-between; align-items: center; padding: 12px 0; border-bottom: 1px solid #eee; transition: background 0.2s; }
+        .list-item { display: flex; justify-content: space-between; align-items: center; padding: 12px 0; border-bottom: 1px solid #eee; transition: background 0.2s; cursor: pointer; }
         .list-item:hover { background: #f9f9f9; }
         .list-item:last-child { border-bottom: none; }
-        .item-details { flex: 1; cursor: pointer; }
+        .item-details { flex: 1; }
         .item-details h4 { margin: 0; font-size: 1em; color: var(--primary); }
         .item-details p { margin: 5px 0 0; font-size: 0.8em; color: #7f8c8d; }
-        .item-amount { font-weight: bold; color: #e74c3c; margin: 0 15px; cursor: pointer; }
+        .item-amount { font-weight: bold; color: #e74c3c; margin: 0 15px; }
 
         /* Edit/Delete Icons */
         .item-actions { display: flex; gap: 10px; }
@@ -204,6 +187,14 @@
     </div>
 </div>
 
+<div class="modal-overlay" id="drilldownModal" onclick="closeDrilldownModal(event)">
+    <div class="modal-content" onclick="event.stopPropagation()">
+        <span class="modal-close" onclick="closeDrilldownModal(event)">&times;</span>
+        <h3 id="drilldownTitle">Details</h3>
+        <div id="drilldownBody"></div>
+    </div>
+</div>
+
 <script>
     const scriptURL = 'https://script.google.com/macros/s/AKfycbydpRx2O_R6W0m-9ZowLmekJTnKjRTPr-YfyO_mYOE3Nw6PieXM6nTVZYxBJRClqKdL/exec'; 
     
@@ -263,7 +254,6 @@
 
     // --- POPUP MODAL (ADD / EDIT) LOGIC ---
     function openAddModal() {
-        // Reset form for fresh entry
         document.getElementById('expenseForm').reset();
         document.getElementById('editId').value = "";
         document.getElementById('date').valueAsDate = new Date();
@@ -272,8 +262,6 @@
         document.getElementById('foreignSection').style.display = 'none';
         document.getElementById('amount').readOnly = false;
         document.getElementById('status').innerText = "";
-        
-        // Show Pop-up
         document.getElementById('addModal').style.display = 'flex';
     }
 
@@ -285,7 +273,6 @@
         const item = localData.find(x => x.id === id);
         if(!item) return;
 
-        // Populate form with existing data
         document.getElementById('editId').value = item.id;
         document.getElementById('date').value = item.date;
         document.getElementById('category').value = item.category;
@@ -301,11 +288,8 @@
             document.getElementById('remark').value = item.remark || "";
         }
 
-        // Change Title and Button for Edit Mode
         document.getElementById('formTitle').innerText = "Edit Expense";
         document.getElementById('submitBtn').innerText = "Update Expense";
-        
-        // Show Pop-up
         document.getElementById('addModal').style.display = 'flex';
     }
 
@@ -362,7 +346,7 @@
         });
     }
 
-    // --- VIEW DETAILS MODAL LOGIC ---
+    // --- VIEW DETAILS MODAL LOGIC (Single Item) ---
     function openModal(id) {
         const item = localData.find(x => x.id === id);
         if(!item) return;
@@ -381,6 +365,69 @@
     }
     function closeModal(event) { document.getElementById('txModal').style.display = 'none'; }
 
+    // --- HISTORY DRILLDOWN MODAL LOGIC (Daily/Monthly Lists) ---
+    function openHistoryDrilldown(key, type) {
+        const body = document.getElementById('drilldownBody');
+        const title = document.getElementById('drilldownTitle');
+        body.innerHTML = '';
+
+        if (type === 'daily') {
+            title.innerText = `Transactions: ${key}`;
+            const dayData = localData.filter(item => item.date === key);
+            
+            if (dayData.length === 0) {
+                body.innerHTML = '<p style="text-align:center; color:#999;">No data.</p>';
+            } else {
+                dayData.forEach(item => {
+                    body.innerHTML += `
+                        <div style="border-bottom: 1px dashed #eee; padding: 12px 0; display: flex; justify-content: space-between; align-items: center;">
+                            <div>
+                                <div style="font-weight: bold; color: var(--primary);">${item.desc}</div>
+                                <div style="font-size: 0.8em; color: #7f8c8d;">${item.category} • ${item.method}</div>
+                            </div>
+                            <div style="font-weight: bold; color: #e74c3c;">RM ${item.amount.toFixed(2)}</div>
+                        </div>
+                    `;
+                });
+            }
+        } else if (type === 'monthly') {
+            const displayMonth = new Date(key + "-01").toLocaleString('en-US', { month: 'long', year: 'numeric' });
+            title.innerText = `Summary: ${displayMonth}`;
+            
+            const monthData = localData.filter(item => item.date.startsWith(key));
+            const categories = {};
+            let total = 0;
+            
+            monthData.forEach(item => {
+                categories[item.category] = (categories[item.category] || 0) + item.amount;
+                total += item.amount;
+            });
+
+            let html = `<div style="text-align:center; font-size: 1.4em; font-weight: bold; margin-bottom: 15px; color: var(--primary); background: #e8f4f8; padding: 10px; border-radius: 8px;">Total: RM ${total.toFixed(2)}</div>`;
+            
+            // Sort categories by amount spent (highest first)
+            const sortedCats = Object.entries(categories).sort((a,b) => b[1] - a[1]);
+            
+            sortedCats.forEach(([cat, amount]) => {
+                let pct = ((amount / total) * 100).toFixed(1);
+                html += `
+                    <div style="border-bottom: 1px dashed #eee; padding: 12px 0; display: flex; justify-content: space-between; align-items: center;">
+                        <div style="font-weight: bold; color: var(--primary);">${cat}</div>
+                        <div style="text-align: right;">
+                            <div style="font-weight: bold; color: #e74c3c;">RM ${amount.toFixed(2)}</div>
+                            <div style="font-size: 0.85em; color: #7f8c8d; font-weight: bold;">${pct}%</div>
+                        </div>
+                    </div>
+                `;
+            });
+            body.innerHTML = html;
+        }
+
+        document.getElementById('drilldownModal').style.display = 'flex';
+    }
+
+    function closeDrilldownModal(event) { document.getElementById('drilldownModal').style.display = 'none'; }
+
     // --- DASHBOARD RENDER ---
     function updateDashboard() {
         const currentMonthStr = new Date().toISOString().substring(0, 7); 
@@ -395,7 +442,24 @@
         myChart = new Chart(ctx, {
             type: 'doughnut',
             data: { labels: Object.keys(categories), datasets: [{ data: Object.values(categories), backgroundColor: ['#e74c3c', '#9b59b6', '#f1c40f', '#1abc9c', '#34495e', '#e67e22'] }] },
-            options: { responsive: true, maintainAspectRatio: false, cutout: '70%', plugins: { legend: { position: 'right' } } }
+            options: { 
+                responsive: true, maintainAspectRatio: false, cutout: '70%', 
+                plugins: { 
+                    legend: { position: 'right' },
+                    // NEW: Upgraded Tooltip showing RM and Percentage
+                    tooltip: {
+                        callbacks: {
+                            label: function(context) {
+                                let label = context.label || '';
+                                let value = context.parsed;
+                                let sum = context.dataset.data.reduce((a, b) => a + b, 0);
+                                let percentage = ((value * 100) / sum).toFixed(1) + "%";
+                                return `${label}: RM ${value.toFixed(2)} (${percentage})`;
+                            }
+                        }
+                    }
+                } 
+            }
         });
 
         const listDiv = document.getElementById('recentTransactions');
@@ -436,6 +500,7 @@
         element.classList.add('active');
         renderHistory(type);
     }
+    
     function renderHistory(type) {
         const contentDiv = document.getElementById('historyContent');
         contentDiv.innerHTML = '';
@@ -454,7 +519,12 @@
         
         sortedKeys.forEach(key => {
             let label = type === 'monthly' ? new Date(key + "-01").toLocaleString('en-US', { month: 'long', year: 'numeric' }) : key;
-            contentDiv.innerHTML += `<div class="list-item" style="cursor:default;"><div class="item-details"><h4 style="font-size:1.1em; color:var(--primary);">${label}</h4></div><div class="item-amount" style="font-size:1.1em;">RM ${groups[key].toFixed(2)}</div></div>`;
+            // NEW: Clickable History items that trigger the Drilldown Modal
+            contentDiv.innerHTML += `
+                <div class="list-item" style="cursor:pointer;" onclick="openHistoryDrilldown('${key}', '${type}')">
+                    <div class="item-details"><h4 style="font-size:1.1em; color:var(--primary);">${label}</h4></div>
+                    <div class="item-amount" style="font-size:1.1em;">RM ${groups[key].toFixed(2)}</div>
+                </div>`;
         });
     }
 
