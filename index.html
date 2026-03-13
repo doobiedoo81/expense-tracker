@@ -47,12 +47,7 @@
         .item-details { flex: 1; }
         .item-details h4 { margin: 0; font-size: 1em; color: var(--primary); }
         .item-details p { margin: 5px 0 0; font-size: 0.8em; color: #7f8c8d; }
-        .item-amount { font-weight: bold; color: #e74c3c; margin: 0 15px; }
-
-        /* Edit/Delete Icons */
-        .item-actions { display: flex; gap: 10px; }
-        .action-icon { font-size: 1.2em; cursor: pointer; opacity: 0.7; }
-        .action-icon:hover { opacity: 1; }
+        .item-amount { font-weight: bold; color: #e74c3c; margin: 0 15px; text-align: right;}
 
         .load-more-btn { width: 100%; padding: 10px; background: #ecf0f1; color: #34495e; border: none; border-radius: 8px; font-weight: bold; cursor: pointer; margin-top: 10px; }
         .load-more-btn:hover { background: #bdc3c7; }
@@ -179,17 +174,17 @@
     </div>
 </div>
 
-<div class="modal-overlay" id="txModal" onclick="closeModal(event)">
+<div class="modal-overlay" id="txModal" onclick="closeModal()">
     <div class="modal-content" onclick="event.stopPropagation()">
-        <span class="modal-close" onclick="closeModal(event)">&times;</span>
+        <span class="modal-close" onclick="closeModal()">&times;</span>
         <h3>Transaction Details</h3>
         <div id="modalBody"></div>
     </div>
 </div>
 
-<div class="modal-overlay" id="drilldownModal" onclick="closeDrilldownModal(event)">
+<div class="modal-overlay" id="drilldownModal" onclick="closeDrilldownModal()">
     <div class="modal-content" onclick="event.stopPropagation()">
-        <span class="modal-close" onclick="closeDrilldownModal(event)">&times;</span>
+        <span class="modal-close" onclick="closeDrilldownModal()">&times;</span>
         <h3 id="drilldownTitle">Details</h3>
         <div id="drilldownBody"></div>
     </div>
@@ -200,7 +195,7 @@
     
     let localData = JSON.parse(localStorage.getItem('myExpenseData')) || [];
     let myChart = null;
-    let monthlyChart = null; // NEW: Holds the monthly summary chart
+    let monthlyChart = null; 
     let displayLimit = 5;
 
     // --- FETCH DATA & FIX TIMEZONE ---
@@ -239,7 +234,7 @@
         }
     }
 
-    // --- NAVIGATION (BUG FIXED) ---
+    // --- NAVIGATION ---
     function switchTab(viewId, element) {
         document.querySelectorAll('.view').forEach(v => v.classList.remove('active'));
         document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
@@ -250,7 +245,6 @@
             displayLimit = 5; 
             updateDashboard();
         } else if (viewId === 'historyView') {
-            // FIX: Always reset the tabs to "Daily" when clicking the History Nav item
             document.querySelectorAll('.history-tab').forEach(t => t.classList.remove('active'));
             document.querySelector('.history-tab').classList.add('active');
             renderHistory('daily');
@@ -266,7 +260,7 @@
         document.getElementById('submitBtn').innerText = "Save Expense";
         document.getElementById('foreignSection').style.display = 'none';
         document.getElementById('amount').readOnly = false;
-        document.getElementById('status').innerText = "";
+        document.getElementById('status').innerText = ""; // BUG FIX: Clear status text
         document.getElementById('addModal').style.display = 'flex';
     }
 
@@ -293,6 +287,7 @@
             document.getElementById('remark').value = item.remark || "";
         }
 
+        document.getElementById('status').innerText = ""; // BUG FIX: Clear status text
         document.getElementById('formTitle').innerText = "Edit Expense";
         document.getElementById('submitBtn').innerText = "Update Expense";
         document.getElementById('addModal').style.display = 'flex';
@@ -351,7 +346,7 @@
         });
     }
 
-    // --- VIEW DETAILS MODAL LOGIC (Single Item) ---
+    // --- VIEW DETAILS MODAL LOGIC ---
     function openModal(id) {
         const item = localData.find(x => x.id === id);
         if(!item) return;
@@ -365,12 +360,22 @@
         if(item.remark && item.remark !== "undefined") {
             html += `<div class="modal-row" style="flex-direction:column; border:none;"><span>Remark:</span> <span style="text-align:left; margin-top:5px; font-style:italic;">${item.remark}</span></div>`;
         }
+        
+        // UPGRADED: Added Edit and Delete buttons inside the popup
+        html += `
+            <div style="display: flex; gap: 10px; margin-top: 25px;">
+                <button style="flex: 1; padding: 12px; background: #f39c12; color: white; border: none; border-radius: 8px; font-weight: bold; cursor: pointer; font-size: 1.1em;" onclick="closeModal(); startEditing(${item.id})">Edit</button>
+                <button style="flex: 1; padding: 12px; background: #e74c3c; color: white; border: none; border-radius: 8px; font-weight: bold; cursor: pointer; font-size: 1.1em;" onclick="closeModal(); deleteTransaction(${item.id})">Delete</button>
+            </div>
+        `;
+        
         document.getElementById('modalBody').innerHTML = html;
         document.getElementById('txModal').style.display = 'flex';
     }
-    function closeModal(event) { document.getElementById('txModal').style.display = 'none'; }
+    
+    function closeModal() { document.getElementById('txModal').style.display = 'none'; }
 
-    // --- HISTORY DRILLDOWN MODAL LOGIC (Daily/Monthly Lists WITH CHART) ---
+    // --- HISTORY DRILLDOWN MODAL LOGIC ---
     function openHistoryDrilldown(key, type) {
         const body = document.getElementById('drilldownBody');
         const title = document.getElementById('drilldownTitle');
@@ -384,8 +389,9 @@
                 body.innerHTML = '<p style="text-align:center; color:#999;">No data.</p>';
             } else {
                 dayData.forEach(item => {
+                    // Make daily history items clickable to open standard details modal
                     body.innerHTML += `
-                        <div style="border-bottom: 1px dashed #eee; padding: 12px 0; display: flex; justify-content: space-between; align-items: center;">
+                        <div style="border-bottom: 1px dashed #eee; padding: 12px 0; display: flex; justify-content: space-between; align-items: center; cursor: pointer;" onclick="closeDrilldownModal(); openModal(${item.id})">
                             <div>
                                 <div style="font-weight: bold; color: var(--primary);">${item.desc}</div>
                                 <div style="font-size: 0.8em; color: #7f8c8d;">${item.category} • ${item.method}</div>
@@ -408,15 +414,12 @@
                 total += item.amount;
             });
 
-            // 1. Show Total
             let html = `<div style="text-align:center; font-size: 1.4em; font-weight: bold; margin-bottom: 15px; color: var(--primary); background: #e8f4f8; padding: 10px; border-radius: 8px;">Total: RM ${total.toFixed(2)}</div>`;
             
-            // 2. Add Container for the Chart
             html += `<div style="position: relative; height: 200px; width: 100%; margin-bottom: 20px;">
                         <canvas id="monthlyChartCanvas"></canvas>
                      </div>`;
 
-            // 3. Show Breakdown List
             const sortedCats = Object.entries(categories).sort((a,b) => b[1] - a[1]);
             sortedCats.forEach(([cat, amount]) => {
                 let pct = ((amount / total) * 100).toFixed(1);
@@ -432,7 +435,6 @@
             });
             body.innerHTML = html;
 
-            // 4. Render the Chart inside the Modal
             const ctxMonthly = document.getElementById('monthlyChartCanvas').getContext('2d');
             if(monthlyChart) monthlyChart.destroy();
             monthlyChart = new Chart(ctxMonthly, {
@@ -466,7 +468,7 @@
         document.getElementById('drilldownModal').style.display = 'flex';
     }
 
-    function closeDrilldownModal(event) { document.getElementById('drilldownModal').style.display = 'none'; }
+    function closeDrilldownModal() { document.getElementById('drilldownModal').style.display = 'none'; }
 
     // --- DASHBOARD RENDER ---
     function updateDashboard() {
@@ -512,17 +514,14 @@
         }
 
         recent.forEach(item => {
+            // Cleaned list item, entire row is clickable
             listDiv.innerHTML += `
-                <div class="list-item">
-                    <div class="item-details" onclick="openModal(${item.id})">
+                <div class="list-item" onclick="openModal(${item.id})">
+                    <div class="item-details">
                         <h4>${item.desc}</h4>
                         <p>${item.date} • ${item.category}</p>
                     </div>
-                    <div class="item-amount" onclick="openModal(${item.id})">RM ${item.amount.toFixed(2)}</div>
-                    <div class="item-actions">
-                        <span class="action-icon" style="color:#f39c12;" onclick="startEditing(${item.id})">✏️</span>
-                        <span class="action-icon" style="color:#e74c3c;" onclick="deleteTransaction(${item.id})">🗑️</span>
-                    </div>
+                    <div class="item-amount">RM ${item.amount.toFixed(2)}</div>
                 </div>
             `;
         });
