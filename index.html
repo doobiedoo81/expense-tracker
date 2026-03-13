@@ -105,16 +105,11 @@
             <div class="recent-list-header">
                 <h3 id="recentListTitle">Recent Transactions</h3>
                 <span class="action-icon" onclick="openFilterModal()" title="Smart Filter">
-                    <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="var(--accent)" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
-                        <line x1="4" y1="21" x2="4" y2="14"></line>
-                        <line x1="4" y1="10" x2="4" y2="3"></line>
-                        <line x1="12" y1="21" x2="12" y2="12"></line>
-                        <line x1="12" y1="8" x2="12" y2="3"></line>
-                        <line x1="20" y1="21" x2="20" y2="16"></line>
-                        <line x1="20" y1="12" x2="20" y2="3"></line>
-                        <line x1="1" y1="14" x2="7" y2="14"></line>
-                        <line x1="9" y1="8" x2="15" y2="8"></line>
-                        <line x1="17" y1="16" x2="23" y2="16"></line>
+                    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="var(--accent)" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                        <circle cx="8" cy="8" r="2.5"></circle>
+                        <line x1="13" y1="8" x2="20" y2="8"></line>
+                        <line x1="4" y1="16" x2="11" y2="16"></line>
+                        <circle cx="16" cy="16" r="2.5"></circle>
                     </svg>
                 </span>
             </div>
@@ -583,10 +578,19 @@
                 },
                 options: { 
                     responsive: true, maintainAspectRatio: false, cutout: '70%', 
-                    plugins: { legend: { position: 'right' }, tooltip: { callbacks: { label: function(context) {
-                        let value = context.parsed; let percentage = ((value * 100) / total).toFixed(1) + "%";
-                        return `${context.label}: RM ${value.toFixed(2)} (${percentage})`;
-                    }}}} 
+                    plugins: { 
+                        legend: { position: 'right' },
+                        tooltip: {
+                            callbacks: {
+                                label: function(context) {
+                                    let label = context.label || '';
+                                    let value = context.parsed;
+                                    let percentage = ((value * 100) / total).toFixed(1) + "%";
+                                    return `${label}: RM ${value.toFixed(2)} (${percentage})`;
+                                }
+                            }
+                        }
+                    } 
                 }
             });
         }
@@ -623,10 +627,20 @@
             data: { labels: Object.keys(categories), datasets: [{ data: Object.values(categories), backgroundColor: ['#e74c3c', '#9b59b6', '#f1c40f', '#1abc9c', '#34495e', '#e67e22'] }] },
             options: { 
                 responsive: true, maintainAspectRatio: false, cutout: '70%', 
-                plugins: { legend: { position: 'right' }, tooltip: { callbacks: { label: function(context) {
-                    let value = context.parsed; let sum = context.dataset.data.reduce((a, b) => a + b, 0);
-                    let percentage = ((value * 100) / sum).toFixed(1) + "%"; return `${context.label}: RM ${value.toFixed(2)} (${percentage})`;
-                }}}} 
+                plugins: { 
+                    legend: { position: 'right' },
+                    tooltip: {
+                        callbacks: {
+                            label: function(context) {
+                                let label = context.label || '';
+                                let value = context.parsed;
+                                let sum = context.dataset.data.reduce((a, b) => a + b, 0);
+                                let percentage = ((value * 100) / sum).toFixed(1) + "%";
+                                return `${label}: RM ${value.toFixed(2)} (${percentage})`;
+                            }
+                        }
+                    }
+                } 
             }
         });
 
@@ -728,6 +742,7 @@
             amount: parseFloat(document.getElementById('amount').value),
             method: document.getElementById('method').value,
             remark: finalRemark,
+            // Assign a precise timestamp ID so newest inputs are always sorted to the top
             id: isEditing ? parseFloat(editId) : Date.now() 
         };
 
