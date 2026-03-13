@@ -18,8 +18,29 @@
         
         /* Navigation */
         .nav-bar { position: fixed; bottom: 0; width: 100%; max-width: 600px; background: var(--card); display: flex; justify-content: space-around; padding: 15px 0; box-shadow: 0 -2px 10px rgba(0,0,0,0.05); z-index: 1000; left: 50%; transform: translateX(-50%); }
-        .nav-item { font-weight: bold; color: #7f8c8d; cursor: pointer; text-transform: uppercase; font-size: 0.85em; padding: 5px 10px; display: flex; flex-direction: column; align-items: center; gap: 4px; }
+        .nav-item { flex: 1; font-weight: bold; color: #7f8c8d; cursor: pointer; text-transform: uppercase; font-size: 0.85em; padding: 5px 10px; display: flex; flex-direction: column; align-items: center; gap: 4px; border-bottom: 2px solid transparent;}
         .nav-item.active { color: var(--accent); border-bottom: 2px solid var(--accent); }
+
+        /* Floating Action Button (FAB) */
+        .fab {
+            position: fixed;
+            bottom: 80px; /* Sits just above the bottom nav bar */
+            right: 20px;
+            background: var(--accent);
+            color: white;
+            width: 60px;
+            height: 60px;
+            border-radius: 50%;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            font-size: 32px;
+            box-shadow: 0 4px 15px rgba(52, 152, 219, 0.4);
+            cursor: pointer;
+            z-index: 999;
+            transition: transform 0.2s;
+        }
+        .fab:active { transform: scale(0.95); }
 
         /* Views */
         .view { display: none; opacity: 0; transition: opacity 0.3s ease; }
@@ -53,9 +74,7 @@
         .load-more-btn { width: 100%; padding: 10px; background: #ecf0f1; color: #34495e; border: none; border-radius: 8px; font-weight: bold; cursor: pointer; margin-top: 10px; }
         .load-more-btn:hover { background: #bdc3c7; }
 
-        /* Form */
-        .form-card { background: var(--card); padding: 25px; border-radius: 12px; box-shadow: 0 2px 10px rgba(0,0,0,0.05); }
-        .form-card h2 { margin-top: 0; color: var(--primary); border-bottom: 2px solid var(--accent); padding-bottom: 10px; text-align: center; }
+        /* Forms & Inputs */
         label { display: block; margin: 15px 0 5px; font-weight: 600; font-size: 0.9em; }
         input, select { width: 100%; padding: 12px; border: 1px solid #ccc; border-radius: 8px; box-sizing: border-box; background: #fafafa; font-size: 1em; }
         input:focus, select:focus { outline: none; border-color: var(--accent); background: #fff; }
@@ -69,11 +88,11 @@
         .history-tab { flex: 1; text-align: center; padding: 10px; font-weight: bold; cursor: pointer; color: #7f8c8d; }
         .history-tab.active { background: var(--accent); color: white; }
 
-        /* Modal Details */
-        .modal-overlay { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); z-index: 2000; justify-content: center; align-items: center; }
-        .modal-content { background: white; padding: 25px; border-radius: 12px; width: 90%; max-width: 350px; position: relative; }
-        .modal-close { position: absolute; top: 15px; right: 15px; font-size: 1.5em; cursor: pointer; color: #95a5a6; }
-        .modal-content h3 { margin-top: 0; border-bottom: 1px solid #eee; padding-bottom: 10px; color: var(--primary); }
+        /* Modals (Popups) */
+        .modal-overlay { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.6); z-index: 2000; justify-content: center; align-items: center; }
+        .modal-content { background: white; padding: 25px; border-radius: 12px; width: 90%; max-width: 400px; position: relative; max-height: 85vh; overflow-y: auto; }
+        .modal-close { position: absolute; top: 15px; right: 15px; font-size: 1.8em; cursor: pointer; color: #95a5a6; line-height: 1; }
+        .modal-content h3, .modal-content h2 { margin-top: 0; border-bottom: 2px solid var(--accent); padding-bottom: 10px; color: var(--primary); text-align: center; }
         .modal-row { margin-bottom: 12px; display: flex; justify-content: space-between; border-bottom: 1px dashed #eee; padding-bottom: 5px; }
         .modal-row span:first-child { font-weight: bold; color: #7f8c8d; }
         .modal-row span:last-child { text-align: right; color: #2c3e50; }
@@ -101,70 +120,12 @@
         </div>
     </div>
 
-    <div id="addView" class="view">
-        <div class="form-card">
-            <h2 id="formTitle">Record Expense</h2>
-            <form id="expenseForm">
-                <input type="hidden" id="editId">
-                <label>Date</label>
-                <input type="date" id="date" required>
-                
-                <label>Category</label>
-                <select id="category">
-                    <option value="Food">Food</option>
-                    <option value="Collection">Collection</option>
-                    <option value="Grocery">Grocery</option>
-                    <option value="Subscription">Subscription</option>
-                    <option value="Rental">Rental / Bills</option>
-                    <option value="Loan">Loan</option>
-                </select>
-
-                <label>Currency</label>
-                <select id="currency">
-                    <option value="MYR">MYR (Ringgit)</option>
-                    <option value="USD">USD (US Dollar)</option>
-                    <option value="KHR">KHR (Cambodian Riel)</option>
-                </select>
-
-                <div id="foreignSection" class="calc-box" style="display: none;">
-                    <label>Foreign Amount</label>
-                    <input type="number" step="0.01" id="foreignAmount" placeholder="0.00">
-                    <label>Exchange Rate (to 1 MYR)</label>
-                    <input type="number" step="0.000001" id="exchangeRate" placeholder="e.g. 4.72">
-                </div>
-                
-                <label>Description</label>
-                <input type="text" id="desc" placeholder="e.g. Lunch, Promo..." required>
-                
-                <label>Total Amount (MYR)</label>
-                <input type="number" step="0.01" id="amount" required>
-                
-                <label>Payment Method</label>
-                <select id="method">
-                    <option value="Debit Card (Wise)">Debit Card (Wise)</option>
-                    <option value="Debit Card (HLB)">Debit Card (HLB)</option>
-                    <option value="Touch n'Go">Touch n'Go</option>
-                    <option value="Credit Card">Credit Card</option>
-                </select>
-
-                <label>Remark (Optional)</label>
-                <input type="text" id="remark" placeholder="Notes, specific details...">
-
-                <div style="display: flex; gap: 10px;">
-                    <button type="submit" id="submitBtn" class="save-btn">Save Expense</button>
-                    <button type="button" id="cancelEditBtn" class="save-btn" style="background:#95a5a6; display:none;" onclick="cancelEditing()">Cancel</button>
-                </div>
-            </form>
-            <div id="status"></div>
-        </div>
-    </div>
-
     <div id="historyView" class="view">
-        <div class="form-card" style="padding: 15px;">
-            <h2 style="margin-top:0;">Summary History</h2>
+        <div style="background: var(--card); padding: 25px; border-radius: 12px; box-shadow: 0 2px 10px rgba(0,0,0,0.05);">
+            <h2 style="margin-top:0; color: var(--primary); border-bottom: 2px solid var(--accent); padding-bottom: 10px; text-align: center;">Summary History</h2>
             <div class="history-tabs">
-                <div class="history-tab active" onclick="switchHistoryTab('daily', this)">Daily Summary</div>
-                <div class="history-tab" onclick="switchHistoryTab('monthly', this)">Monthly History</div>
+                <div class="history-tab active" onclick="switchHistoryTab('daily', this)">Daily</div>
+                <div class="history-tab" onclick="switchHistoryTab('monthly', this)">Monthly</div>
             </div>
             <div id="historyContent" class="recent-list" style="box-shadow: none; padding: 0;"></div>
         </div>
@@ -172,10 +133,67 @@
 
 </div>
 
+<div class="fab" onclick="openAddModal()">+</div>
+
 <div class="nav-bar">
     <div class="nav-item active" onclick="switchTab('dashboardView', this)">Dashboard</div>
-    <div class="nav-item" onclick="switchTab('addView', this)">+ Add</div>
     <div class="nav-item" onclick="switchTab('historyView', this)">History</div>
+</div>
+
+<div class="modal-overlay" id="addModal">
+    <div class="modal-content">
+        <span class="modal-close" onclick="closeAddModal()">&times;</span>
+        <h2 id="formTitle">Record Expense</h2>
+        <form id="expenseForm">
+            <input type="hidden" id="editId">
+            <label>Date</label>
+            <input type="date" id="date" required>
+            
+            <label>Category</label>
+            <select id="category">
+                <option value="Food">Food</option>
+                <option value="Collection">Collection</option>
+                <option value="Grocery">Grocery</option>
+                <option value="Subscription">Subscription</option>
+                <option value="Rental">Rental / Bills</option>
+                <option value="Loan">Loan</option>
+            </select>
+
+            <label>Currency</label>
+            <select id="currency">
+                <option value="MYR">MYR (Ringgit)</option>
+                <option value="USD">USD (US Dollar)</option>
+                <option value="KHR">KHR (Cambodian Riel)</option>
+            </select>
+
+            <div id="foreignSection" class="calc-box" style="display: none;">
+                <label>Foreign Amount</label>
+                <input type="number" step="0.01" id="foreignAmount" placeholder="0.00">
+                <label>Exchange Rate (to 1 MYR)</label>
+                <input type="number" step="0.000001" id="exchangeRate" placeholder="e.g. 4.72">
+            </div>
+            
+            <label>Description</label>
+            <input type="text" id="desc" placeholder="e.g. Lunch, Promo..." required>
+            
+            <label>Total Amount (MYR)</label>
+            <input type="number" step="0.01" id="amount" required>
+            
+            <label>Payment Method</label>
+            <select id="method">
+                <option value="Debit Card (Wise)">Debit Card (Wise)</option>
+                <option value="Debit Card (HLB)">Debit Card (HLB)</option>
+                <option value="Touch n'Go">Touch n'Go</option>
+                <option value="Credit Card">Credit Card</option>
+            </select>
+
+            <label>Remark (Optional)</label>
+            <input type="text" id="remark" placeholder="Notes, specific details...">
+
+            <button type="submit" id="submitBtn" class="save-btn">Save Expense</button>
+        </form>
+        <div id="status"></div>
+    </div>
 </div>
 
 <div class="modal-overlay" id="txModal" onclick="closeModal(event)">
@@ -202,18 +220,14 @@
             const sheetData = await response.json();
             if (sheetData && !sheetData.error) {
                 localData = sheetData.map((item, index) => {
-                    
-                    // --- LOCAL TIMEZONE FIX ---
                     let d = new Date(item.date);
                     let localYear = d.getFullYear();
                     let localMonth = String(d.getMonth() + 1).padStart(2, '0');
                     let localDay = String(d.getDate()).padStart(2, '0');
                     let correctedDate = `${localYear}-${localMonth}-${localDay}`;
-                    // --------------------------
-
                     return {
-                        id: item.id || Date.now() + index, // Assign ID for editing
-                        date: correctedDate,               // Use corrected local date
+                        id: item.id || Date.now() + index,
+                        date: correctedDate,               
                         category: item.category,
                         desc: item.desc,
                         amount: parseFloat(item.amount) || 0,
@@ -247,6 +261,54 @@
         }
     }
 
+    // --- POPUP MODAL (ADD / EDIT) LOGIC ---
+    function openAddModal() {
+        // Reset form for fresh entry
+        document.getElementById('expenseForm').reset();
+        document.getElementById('editId').value = "";
+        document.getElementById('date').valueAsDate = new Date();
+        document.getElementById('formTitle').innerText = "Record Expense";
+        document.getElementById('submitBtn').innerText = "Save Expense";
+        document.getElementById('foreignSection').style.display = 'none';
+        document.getElementById('amount').readOnly = false;
+        document.getElementById('status').innerText = "";
+        
+        // Show Pop-up
+        document.getElementById('addModal').style.display = 'flex';
+    }
+
+    function closeAddModal() {
+        document.getElementById('addModal').style.display = 'none';
+    }
+
+    function startEditing(id) {
+        const item = localData.find(x => x.id === id);
+        if(!item) return;
+
+        // Populate form with existing data
+        document.getElementById('editId').value = item.id;
+        document.getElementById('date').value = item.date;
+        document.getElementById('category').value = item.category;
+        document.getElementById('desc').value = item.desc;
+        document.getElementById('amount').value = item.amount;
+        document.getElementById('method').value = item.method;
+        
+        if(item.remark && item.remark.includes(" | [")) {
+            document.getElementById('remark').value = item.remark.split(" | [")[0];
+        } else if (item.remark && item.remark.startsWith("[")) {
+            document.getElementById('remark').value = "";
+        } else {
+            document.getElementById('remark').value = item.remark || "";
+        }
+
+        // Change Title and Button for Edit Mode
+        document.getElementById('formTitle').innerText = "Edit Expense";
+        document.getElementById('submitBtn').innerText = "Update Expense";
+        
+        // Show Pop-up
+        document.getElementById('addModal').style.display = 'flex';
+    }
+
     // --- CURRENCY LOGIC ---
     const currency = document.getElementById('currency');
     const foreignSection = document.getElementById('foreignSection');
@@ -278,48 +340,13 @@
     foreignAmount.addEventListener('input', calculateTotal);
     exchangeRate.addEventListener('input', calculateTotal);
 
-    // --- EDIT & DELETE LOGIC ---
+    // --- DELETE LOGIC ---
     function deleteTransaction(id) {
         if(!confirm("Delete this expense? This will also remove it from Google Sheets.")) return;
         localData = localData.filter(item => item.id !== id);
         localStorage.setItem('myExpenseData', JSON.stringify(localData));
         updateDashboard();
         syncEditRemoveToSheets();
-    }
-
-    function startEditing(id) {
-        const item = localData.find(x => x.id === id);
-        if(!item) return;
-
-        document.getElementById('editId').value = item.id;
-        document.getElementById('date').value = item.date;
-        document.getElementById('category').value = item.category;
-        document.getElementById('desc').value = item.desc;
-        document.getElementById('amount').value = item.amount;
-        document.getElementById('method').value = item.method;
-        
-        if(item.remark && item.remark.includes(" | [")) {
-            document.getElementById('remark').value = item.remark.split(" | [")[0];
-        } else if (item.remark && item.remark.startsWith("[")) {
-            document.getElementById('remark').value = "";
-        } else {
-            document.getElementById('remark').value = item.remark || "";
-        }
-
-        document.getElementById('formTitle').innerText = "Edit Expense";
-        document.getElementById('submitBtn').innerText = "Update Expense";
-        document.getElementById('cancelEditBtn').style.display = "block";
-        switchTab('addView', document.querySelectorAll('.nav-item')[1]);
-    }
-
-    function cancelEditing() {
-        document.getElementById('expenseForm').reset();
-        document.getElementById('editId').value = "";
-        document.getElementById('date').valueAsDate = new Date();
-        document.getElementById('formTitle').innerText = "Record Expense";
-        document.getElementById('submitBtn').innerText = "Save Expense";
-        document.getElementById('cancelEditBtn').style.display = "none";
-        switchTab('dashboardView', document.querySelector('.nav-item'));
     }
 
     function syncEditRemoveToSheets() {
@@ -335,7 +362,7 @@
         });
     }
 
-    // --- MODAL LOGIC ---
+    // --- VIEW DETAILS MODAL LOGIC ---
     function openModal(id) {
         const item = localData.find(x => x.id === id);
         if(!item) return;
@@ -469,7 +496,7 @@
             
             status.style.color = "#27ae60";
             status.innerText = "Updated successfully!";
-            cancelEditing();
+            setTimeout(() => { closeAddModal(); }, 800);
             btn.disabled = false;
         } else {
             fetch(scriptURL, {
@@ -479,11 +506,7 @@
                 status.style.color = "#27ae60";
                 status.innerText = "Saved successfully!";
                 fetchFromSheets(); 
-                document.getElementById('expenseForm').reset();
-                document.getElementById('date').valueAsDate = new Date(); 
-                foreignSection.style.display = 'none';
-                amountMYR.readOnly = false;
-                setTimeout(() => { status.innerText = ""; switchTab('dashboardView', document.querySelector('.nav-item')); }, 1500);
+                setTimeout(() => { closeAddModal(); }, 1000);
                 btn.disabled = false;
             }).catch(() => {
                 status.style.color = "#c0392b";
