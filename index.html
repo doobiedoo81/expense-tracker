@@ -7,12 +7,12 @@
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <style>
         :root { --primary: #2c3e50; --accent: #3498db; --bg: #f4f7f6; --card: #ffffff; --text: #333; }
-        body { font-family: 'Segoe UI', Tahoma, Geneva, sans-serif; background: var(--bg); margin: 0; padding: 0; color: var(--text); padding-bottom: 70px; }
+        body { font-family: 'Segoe UI', Tahoma, Geneva, sans-serif; background: var(--bg); margin: 0; padding: 0; color: var(--text); padding-bottom: 80px; }
         .container { max-width: 600px; margin: auto; padding: 20px; }
         
         /* Navigation */
         .nav-bar { position: fixed; bottom: 0; width: 100%; max-width: 600px; background: var(--card); display: flex; justify-content: space-around; padding: 15px 0; box-shadow: 0 -2px 10px rgba(0,0,0,0.05); z-index: 1000; left: 50%; transform: translateX(-50%); }
-        .nav-item { font-weight: bold; color: #7f8c8d; cursor: pointer; text-transform: uppercase; font-size: 0.85em; padding: 5px 10px; }
+        .nav-item { font-weight: bold; color: #7f8c8d; cursor: pointer; text-transform: uppercase; font-size: 0.85em; padding: 5px 10px; display: flex; flex-direction: column; align-items: center; gap: 4px; }
         .nav-item.active { color: var(--accent); border-bottom: 2px solid var(--accent); }
 
         /* Views */
@@ -28,14 +28,18 @@
         .chart-container { background: var(--card); padding: 20px; border-radius: 12px; box-shadow: 0 2px 10px rgba(0,0,0,0.05); margin-bottom: 20px; max-height: 350px; display: flex; flex-direction: column; align-items: center; }
         .chart-container h3 { margin-top: 0; color: var(--primary); width: 100%; text-align: center; }
         
-        /* List */
+        /* Lists & Items */
         .recent-list { background: var(--card); border-radius: 12px; padding: 15px; box-shadow: 0 2px 10px rgba(0,0,0,0.05); }
         .recent-list h3 { margin-top: 0; color: var(--primary); border-bottom: 2px solid #eee; padding-bottom: 10px; }
-        .list-item { display: flex; justify-content: space-between; align-items: center; padding: 12px 0; border-bottom: 1px solid #eee; }
+        .list-item { display: flex; justify-content: space-between; align-items: center; padding: 12px 0; border-bottom: 1px solid #eee; cursor: pointer; transition: background 0.2s; }
+        .list-item:hover { background: #f9f9f9; }
         .list-item:last-child { border-bottom: none; }
         .item-details h4 { margin: 0; font-size: 1em; color: var(--primary); }
         .item-details p { margin: 5px 0 0; font-size: 0.8em; color: #7f8c8d; }
         .item-amount { font-weight: bold; color: #e74c3c; }
+
+        .load-more-btn { width: 100%; padding: 10px; background: #ecf0f1; color: #34495e; border: none; border-radius: 8px; font-weight: bold; cursor: pointer; margin-top: 10px; }
+        .load-more-btn:hover { background: #bdc3c7; }
 
         /* Form */
         .form-card { background: var(--card); padding: 25px; border-radius: 12px; box-shadow: 0 2px 10px rgba(0,0,0,0.05); }
@@ -44,10 +48,22 @@
         input, select { width: 100%; padding: 12px; border: 1px solid #ccc; border-radius: 8px; box-sizing: border-box; background: #fafafa; font-size: 1em; }
         input:focus, select:focus { outline: none; border-color: var(--accent); background: #fff; }
         .calc-box { background: #e8f4f8; padding: 10px 15px; border-radius: 8px; margin-top: 10px; border-left: 4px solid var(--accent); }
-        button { width: 100%; padding: 15px; background: var(--accent); color: white; border: none; border-radius: 8px; font-weight: bold; font-size: 1.1em; margin-top: 25px; cursor: pointer; transition: background 0.3s; }
-        button:hover { background: #2980b9; }
-        button:disabled { background: #bdc3c7; cursor: not-allowed; }
+        .save-btn { width: 100%; padding: 15px; background: var(--accent); color: white; border: none; border-radius: 8px; font-weight: bold; font-size: 1.1em; margin-top: 25px; cursor: pointer; transition: background 0.3s; }
         #status { text-align: center; margin-top: 15px; font-weight: bold; min-height: 20px; }
+
+        /* History View Tabs */
+        .history-tabs { display: flex; margin-bottom: 15px; background: #e0e6ed; border-radius: 8px; overflow: hidden; }
+        .history-tab { flex: 1; text-align: center; padding: 10px; font-weight: bold; cursor: pointer; color: #7f8c8d; transition: 0.3s; }
+        .history-tab.active { background: var(--accent); color: white; }
+
+        /* Modal Details */
+        .modal-overlay { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); z-index: 2000; justify-content: center; align-items: center; }
+        .modal-content { background: white; padding: 25px; border-radius: 12px; width: 90%; max-width: 350px; position: relative; }
+        .modal-close { position: absolute; top: 15px; right: 15px; font-size: 1.5em; cursor: pointer; color: #95a5a6; }
+        .modal-content h3 { margin-top: 0; border-bottom: 1px solid #eee; padding-bottom: 10px; color: var(--primary); }
+        .modal-row { margin-bottom: 12px; display: flex; justify-content: space-between; border-bottom: 1px dashed #eee; padding-bottom: 5px; }
+        .modal-row span:first-child { font-weight: bold; color: #7f8c8d; }
+        .modal-row span:last-child { text-align: right; color: #2c3e50; }
     </style>
 </head>
 <body>
@@ -71,8 +87,7 @@
 
         <div class="recent-list">
             <h3>Recent Transactions</h3>
-            <div id="recentTransactions">
-                </div>
+            <div id="recentTransactions"></div>
         </div>
     </div>
 
@@ -86,7 +101,7 @@
                 <label>Category</label>
                 <select id="category">
                     <option value="Food">Food</option>
-                    <option value="Collection">Collection</option>
+                    <option value="Collection">Collection (Pokémon)</option>
                     <option value="Grocery">Grocery</option>
                     <option value="Subscription">Subscription</option>
                     <option value="Rental">Rental / Bills</option>
@@ -124,9 +139,23 @@
                 <label>Remark (Optional)</label>
                 <input type="text" id="remark" placeholder="Notes, specific details...">
 
-                <button type="submit" id="submitBtn">Save Expense</button>
+                <button type="submit" id="submitBtn" class="save-btn">Save Expense</button>
             </form>
             <div id="status"></div>
+        </div>
+    </div>
+
+    <div id="historyView" class="view">
+        <div class="form-card" style="padding: 15px;">
+            <h2 style="margin-top:0;">Summary History</h2>
+            
+            <div class="history-tabs">
+                <div class="history-tab active" onclick="switchHistoryTab('daily', this)">Daily Summary</div>
+                <div class="history-tab" onclick="switchHistoryTab('monthly', this)">Monthly History</div>
+            </div>
+
+            <div id="historyContent" class="recent-list" style="box-shadow: none; padding: 0;">
+                </div>
         </div>
     </div>
 
@@ -134,7 +163,16 @@
 
 <div class="nav-bar">
     <div class="nav-item active" onclick="switchTab('dashboardView', this)">Dashboard</div>
-    <div class="nav-item" onclick="switchTab('addView', this)">+ Add Expense</div>
+    <div class="nav-item" onclick="switchTab('addView', this)">+ Add</div>
+    <div class="nav-item" onclick="switchTab('historyView', this)">History</div>
+</div>
+
+<div class="modal-overlay" id="txModal" onclick="closeModal(event)">
+    <div class="modal-content" onclick="event.stopPropagation()">
+        <span class="modal-close" onclick="closeModal(event)">&times;</span>
+        <h3>Transaction Details</h3>
+        <div id="modalBody"></div>
+    </div>
 </div>
 
 <script>
@@ -144,10 +182,11 @@
     const scriptURL = 'https://script.google.com/macros/s/AKfycbydpRx2O_R6W0m-9ZowLmekJTnKjRTPr-YfyO_mYOE3Nw6PieXM6nTVZYxBJRClqKdL/exec'; 
     
     // ==========================================
-    // 2. STATE MANAGEMENT & TWO-WAY SYNC
+    // 2. STATE MANAGEMENT & GLOBALS
     // ==========================================
     let localData = JSON.parse(localStorage.getItem('myExpenseData')) || [];
     let myChart = null;
+    let displayLimit = 5; // Start showing only 5 items
 
     async function fetchFromSheets() {
         const syncStatus = document.getElementById('syncStatus');
@@ -158,11 +197,10 @@
             const sheetData = await response.json();
             
             if (sheetData && !sheetData.error) {
-                // Parse the data received from Apps Script
                 localData = sheetData.map((item, index) => {
                     let formattedDate = new Date(item.date).toISOString().split('T')[0];
                     return {
-                        id: index,
+                        id: index, // Unique ID for modal matching
                         date: formattedDate,
                         category: item.category,
                         desc: item.desc,
@@ -180,19 +218,25 @@
         } catch (error) {
             console.error("Fetch Error:", error);
             if(syncStatus) syncStatus.innerText = "Offline mode (Showing cached data)";
-            updateDashboard(); // Fallback to local cache
+            updateDashboard();
         }
     }
 
     // ==========================================
-    // 3. UI TAB SWITCHING & CURRENCY LOGIC
+    // 3. UI VIEW SWITCHING & CURRENCY LOGIC
     // ==========================================
     function switchTab(viewId, element) {
         document.querySelectorAll('.view').forEach(v => v.classList.remove('active'));
         document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
         document.getElementById(viewId).classList.add('active');
         element.classList.add('active');
-        if(viewId === 'dashboardView') updateDashboard();
+        
+        if(viewId === 'dashboardView') {
+            displayLimit = 5; // Reset limit when navigating back
+            updateDashboard();
+        } else if (viewId === 'historyView') {
+            renderHistory('daily'); // Default to daily when opening
+        }
     }
 
     const currency = document.getElementById('currency');
@@ -226,14 +270,48 @@
     exchangeRate.addEventListener('input', calculateTotal);
 
     // ==========================================
-    // 4. RENDER DASHBOARD (CHART & LIST)
+    // 4. MODAL LOGIC
+    // ==========================================
+    function openModal(id) {
+        const item = localData.find(x => x.id === id);
+        if(!item) return;
+
+        let html = `
+            <div class="modal-row"><span>Date:</span> <span>${item.date}</span></div>
+            <div class="modal-row"><span>Item:</span> <span>${item.desc}</span></div>
+            <div class="modal-row"><span>Category:</span> <span>${item.category}</span></div>
+            <div class="modal-row"><span>Amount:</span> <span style="font-size:1.2em; font-weight:bold; color:#e74c3c;">RM ${item.amount.toFixed(2)}</span></div>
+            <div class="modal-row"><span>Method:</span> <span>${item.method}</span></div>
+        `;
+        
+        if(item.remark && item.remark !== "undefined") {
+            html += `<div class="modal-row" style="flex-direction:column; border:none;">
+                        <span>Remark:</span> 
+                        <span style="text-align:left; margin-top:5px; font-style:italic;">${item.remark}</span>
+                     </div>`;
+        }
+
+        document.getElementById('modalBody').innerHTML = html;
+        document.getElementById('txModal').style.display = 'flex';
+    }
+
+    function closeModal(event) {
+        document.getElementById('txModal').style.display = 'none';
+    }
+
+    // ==========================================
+    // 5. RENDER DASHBOARD (Chart + Load More)
     // ==========================================
     function updateDashboard() {
-        const total = localData.reduce((sum, item) => sum + item.amount, 0);
+        // Filter only current month for Dashboard Totals
+        const currentMonthStr = new Date().toISOString().substring(0, 7); // YYYY-MM
+        const thisMonthData = localData.filter(item => item.date.startsWith(currentMonthStr));
+
+        const total = thisMonthData.reduce((sum, item) => sum + item.amount, 0);
         document.getElementById('totalSpent').innerText = `RM ${total.toFixed(2)}`;
 
         const categories = {};
-        localData.forEach(item => {
+        thisMonthData.forEach(item => {
             categories[item.category] = (categories[item.category] || 0) + item.amount;
         });
 
@@ -249,27 +327,39 @@
                 }]
             },
             options: { 
-                responsive: true,
-                maintainAspectRatio: false,
-                cutout: '70%', 
-                plugins: { legend: { position: 'right' } } 
+                responsive: true, maintainAspectRatio: false, cutout: '70%', 
+                plugins: { 
+                    legend: { position: 'right' },
+                    tooltip: {
+                        callbacks: {
+                            label: function(context) {
+                                let label = context.label || '';
+                                let value = context.parsed;
+                                let sum = context.dataset.data.reduce((a, b) => a + b, 0);
+                                let percentage = ((value * 100) / sum).toFixed(1) + "%";
+                                return `${label}: RM ${value.toFixed(2)} (${percentage})`;
+                            }
+                        }
+                    }
+                } 
             }
         });
 
+        // Render List with Load More
         const listDiv = document.getElementById('recentTransactions');
         listDiv.innerHTML = '';
         
-        // Sort descending by date
-        const recent = [...localData].sort((a,b) => new Date(b.date) - new Date(a.date)).slice(0, 5);
+        const sortedData = [...localData].sort((a,b) => new Date(b.date) - new Date(a.date));
+        const recent = sortedData.slice(0, displayLimit);
         
         if(recent.length === 0) {
-            listDiv.innerHTML = '<p style="text-align:center; color:#999; padding: 20px 0;">No expenses found.</p>';
+            listDiv.innerHTML = '<p style="text-align:center; color:#999;">No expenses found.</p>';
             return;
         }
 
         recent.forEach(item => {
             listDiv.innerHTML += `
-                <div class="list-item">
+                <div class="list-item" onclick="openModal(${item.id})">
                     <div class="item-details">
                         <h4>${item.desc}</h4>
                         <p>${item.date} • ${item.category}</p>
@@ -278,10 +368,82 @@
                 </div>
             `;
         });
+
+        if(sortedData.length > displayLimit) {
+            listDiv.innerHTML += `<button class="load-more-btn" onclick="loadMore()">Load More Transactions</button>`;
+        }
+    }
+
+    function loadMore() {
+        displayLimit += 10;
+        updateDashboard();
     }
 
     // ==========================================
-    // 5. FORM SUBMISSION (POST TO SHEETS)
+    // 6. HISTORY LOGIC (Daily / Monthly)
+    // ==========================================
+    function switchHistoryTab(type, element) {
+        document.querySelectorAll('.history-tab').forEach(t => t.classList.remove('active'));
+        element.classList.add('active');
+        renderHistory(type);
+    }
+
+    function renderHistory(type) {
+        const contentDiv = document.getElementById('historyContent');
+        contentDiv.innerHTML = '';
+
+        if(localData.length === 0) {
+            contentDiv.innerHTML = '<p style="text-align:center; color:#999; padding:20px;">No data available.</p>';
+            return;
+        }
+
+        const groups = {};
+
+        if (type === 'daily') {
+            // Only group current month's data by day
+            const currentMonthStr = new Date().toISOString().substring(0, 7);
+            const thisMonthData = localData.filter(item => item.date.startsWith(currentMonthStr));
+            
+            thisMonthData.forEach(item => {
+                groups[item.date] = (groups[item.date] || 0) + item.amount;
+            });
+        } else if (type === 'monthly') {
+            // Group ALL data by YYYY-MM
+            localData.forEach(item => {
+                const monthStr = item.date.substring(0, 7); // Gets YYYY-MM
+                groups[monthStr] = (groups[monthStr] || 0) + item.amount;
+            });
+        }
+
+        // Sort descending (newest first)
+        const sortedKeys = Object.keys(groups).sort((a,b) => new Date(b) - new Date(a));
+
+        if(sortedKeys.length === 0) {
+            contentDiv.innerHTML = '<p style="text-align:center; color:#999; padding:20px;">No data found for this period.</p>';
+            return;
+        }
+
+        sortedKeys.forEach(key => {
+            // Format nice label
+            let label = key;
+            if(type === 'monthly') {
+                const dateObj = new Date(key + "-01");
+                label = dateObj.toLocaleString('en-US', { month: 'long', year: 'numeric' });
+            }
+
+            contentDiv.innerHTML += `
+                <div class="list-item" style="cursor:default;">
+                    <div class="item-details">
+                        <h4 style="font-size:1.1em; color:#34495e;">${label}</h4>
+                    </div>
+                    <div class="item-amount" style="font-size:1.1em;">RM ${groups[key].toFixed(2)}</div>
+                </div>
+            `;
+        });
+    }
+
+    // ==========================================
+    // 7. FORM SUBMISSION (POST TO SHEETS)
     // ==========================================
     document.getElementById('expenseForm').addEventListener('submit', e => {
         e.preventDefault();
@@ -308,24 +470,19 @@
         };
 
         fetch(scriptURL, {
-            method: 'POST',
-            mode: 'no-cors',
-            headers: { 'Content-Type': 'application/json' },
+            method: 'POST', mode: 'no-cors', headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify(payload)
         }).then(() => {
             status.style.color = "#27ae60";
             status.innerText = "Saved successfully!";
             
-            // Re-fetch to guarantee perfect sync with the database
-            fetchFromSheets();
+            fetchFromSheets(); // Re-sync
 
-            // Reset Form
             document.getElementById('expenseForm').reset();
             document.getElementById('date').valueAsDate = new Date(); 
             foreignSection.style.display = 'none';
             amountMYR.readOnly = false;
             
-            // Switch back to dashboard
             setTimeout(() => { 
                 status.innerText = ""; 
                 switchTab('dashboardView', document.querySelector('.nav-item')); 
@@ -334,12 +491,11 @@
         }).catch(err => {
             status.style.color = "#c0392b";
             status.innerText = "Error syncing to Sheets.";
-            console.error(err);
             btn.disabled = false;
         });
     });
 
-    // Run the initial data fetch when the page loads
+    // Boot Up
     window.onload = fetchFromSheets;
 </script>
 
