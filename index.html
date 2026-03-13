@@ -74,7 +74,7 @@
         /* Modals (Popups) */
         .modal-overlay { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.6); z-index: 2000; justify-content: center; align-items: center; }
         .modal-content { background: white; padding: 25px; border-radius: 12px; width: 90%; max-width: 400px; position: relative; max-height: 85vh; overflow-y: auto; }
-        .modal-close { position: absolute; top: 15px; right: 15px; font-size: 1.8em; cursor: pointer; color: #95a5a6; line-height: 1; }
+        .modal-close { position: absolute; top: 15px; right: 15px; font-size: 1.8em; cursor: pointer; color: #95a5a6; line-height: 1; z-index: 2010;}
         .modal-content h3, .modal-content h2 { margin-top: 0; border-bottom: 2px solid var(--accent); padding-bottom: 10px; color: var(--primary); text-align: center; }
         .modal-row { margin-bottom: 12px; display: flex; justify-content: space-between; border-bottom: 1px dashed #eee; padding-bottom: 5px; }
         .modal-row span:first-child { font-weight: bold; color: #7f8c8d; }
@@ -200,6 +200,7 @@
     
     let localData = JSON.parse(localStorage.getItem('myExpenseData')) || [];
     let myChart = null;
+    let monthlyChart = null; // NEW: Holds the monthly summary chart
     let displayLimit = 5;
 
     // --- FETCH DATA & FIX TIMEZONE ---
@@ -238,16 +239,20 @@
         }
     }
 
-    // --- NAVIGATION ---
+    // --- NAVIGATION (BUG FIXED) ---
     function switchTab(viewId, element) {
         document.querySelectorAll('.view').forEach(v => v.classList.remove('active'));
         document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
         document.getElementById(viewId).classList.add('active');
         element.classList.add('active');
+        
         if(viewId === 'dashboardView') {
             displayLimit = 5; 
             updateDashboard();
         } else if (viewId === 'historyView') {
+            // FIX: Always reset the tabs to "Daily" when clicking the History Nav item
+            document.querySelectorAll('.history-tab').forEach(t => t.classList.remove('active'));
+            document.querySelector('.history-tab').classList.add('active');
             renderHistory('daily');
         }
     }
@@ -365,7 +370,7 @@
     }
     function closeModal(event) { document.getElementById('txModal').style.display = 'none'; }
 
-    // --- HISTORY DRILLDOWN MODAL LOGIC (Daily/Monthly Lists) ---
+    // --- HISTORY DRILLDOWN MODAL LOGIC (Daily/Monthly Lists WITH CHART) ---
     function openHistoryDrilldown(key, type) {
         const body = document.getElementById('drilldownBody');
         const title = document.getElementById('drilldownTitle');
@@ -403,11 +408,16 @@
                 total += item.amount;
             });
 
+            // 1. Show Total
             let html = `<div style="text-align:center; font-size: 1.4em; font-weight: bold; margin-bottom: 15px; color: var(--primary); background: #e8f4f8; padding: 10px; border-radius: 8px;">Total: RM ${total.toFixed(2)}</div>`;
             
-            // Sort categories by amount spent (highest first)
+            // 2. Add Container for the Chart
+            html += `<div style="position: relative; height: 200px; width: 100%; margin-bottom: 20px;">
+                        <canvas id="monthlyChartCanvas"></canvas>
+                     </div>`;
+
+            // 3. Show Breakdown List
             const sortedCats = Object.entries(categories).sort((a,b) => b[1] - a[1]);
-            
             sortedCats.forEach(([cat, amount]) => {
                 let pct = ((amount / total) * 100).toFixed(1);
                 html += `
@@ -421,6 +431,36 @@
                 `;
             });
             body.innerHTML = html;
+
+            // 4. Render the Chart inside the Modal
+            const ctxMonthly = document.getElementById('monthlyChartCanvas').getContext('2d');
+            if(monthlyChart) monthlyChart.destroy();
+            monthlyChart = new Chart(ctxMonthly, {
+                type: 'doughnut',
+                data: {
+                    labels: Object.keys(categories),
+                    datasets: [{
+                        data: Object.values(categories),
+                        backgroundColor: ['#e74c3c', '#9b59b6', '#f1c40f', '#1abc9c', '#34495e', '#e67e22']
+                    }]
+                },
+                options: { 
+                    responsive: true, maintainAspectRatio: false, cutout: '70%', 
+                    plugins: { 
+                        legend: { position: 'right' },
+                        tooltip: {
+                            callbacks: {
+                                label: function(context) {
+                                    let label = context.label || '';
+                                    let value = context.parsed;
+                                    let percentage = ((value * 100) / total).toFixed(1) + "%";
+                                    return `${label}: RM ${value.toFixed(2)} (${percentage})`;
+                                }
+                            }
+                        }
+                    } 
+                }
+            });
         }
 
         document.getElementById('drilldownModal').style.display = 'flex';
@@ -446,7 +486,6 @@
                 responsive: true, maintainAspectRatio: false, cutout: '70%', 
                 plugins: { 
                     legend: { position: 'right' },
-                    // NEW: Upgraded Tooltip showing RM and Percentage
                     tooltip: {
                         callbacks: {
                             label: function(context) {
@@ -519,7 +558,6 @@
         
         sortedKeys.forEach(key => {
             let label = type === 'monthly' ? new Date(key + "-01").toLocaleString('en-US', { month: 'long', year: 'numeric' }) : key;
-            // NEW: Clickable History items that trigger the Drilldown Modal
             contentDiv.innerHTML += `
                 <div class="list-item" style="cursor:pointer;" onclick="openHistoryDrilldown('${key}', '${type}')">
                     <div class="item-details"><h4 style="font-size:1.1em; color:var(--primary);">${label}</h4></div>
